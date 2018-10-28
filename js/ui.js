@@ -24,6 +24,11 @@ function setState(state) {
 	document.body.className = state
 }
 
+document.getElementById('reset').onclick = function () {
+	ai.reset()
+	location.reload()
+}
+
 // Human choices
 
 document.getElementById('human-choices').onclick = function(e) {
@@ -67,7 +72,6 @@ const chartData = {
 }
 
 const chart = new Chart('#chart', {
-	title: 'Web-based Rock-Paper-Scissors vs a Neural Network',
 	type: 'line',
 	height: 100,
 	data: chartData

@@ -9,6 +9,7 @@ const TRAIN_OPTIONS = {
 }
 
 const MEMORY_BLOCKS = 8
+const OUTPUTS = 3
 
 // Values
 
@@ -16,22 +17,26 @@ const HUMAN = 0
 const AI = 1
 const TIE = 0.5
 
-const OUTPUTS = 3
+const STORAGE = 'brain'
 
 // AI
 
-const ai = localStorage.brain ?
-		neataptic.Network.fromJSON(JSON.parse(localStorage.brain)) :
+const ai = localStorage.getItem(STORAGE) ?
+		neataptic.Network.fromJSON(JSON.parse(localStorage.getItem(STORAGE))) :
 		new neataptic.architect.LSTM(OUTPUTS + 1, MEMORY_BLOCKS, MEMORY_BLOCKS, OUTPUTS);
 
 let matches = []
+
+ai.reset = function() {
+	localStorage.removeItem(STORAGE)
+}
 
 ai.record = function (choice, result) {
 	const match = createMatch(choice, result)
 	const prev = matches[matches.length - 1]
 	if (prev) {
 		ai.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
-		localStorage.brain = JSON.stringify(ai.toJSON())
+		localStorage.setItem(STORAGE, JSON.stringify(ai.toJSON()))
 	}
 	matches.push(match)
 }

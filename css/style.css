@@ -1,12 +1,22 @@
-/* Main */
 
 .thinking, .ended {
 	pointer-events: none;
 }
-		.ready .busy, .ended .busy {
-			visibility: hidden;
-		}
+.ready .busy, .ended .busy {
+	visibility: hidden;
+}
 
+#reset {
+	position: absolute;
+	right: 5px;
+	top: 5px;
+}
+
+h1 {
+	margin: 10px;
+}
+
+/* Main */
 main {
 	margin-top: 20px;
 }
