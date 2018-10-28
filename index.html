@@ -1,0 +1,47 @@
+<html>
+	<head>
+		<title>NN RPS - A neural network that learns to beat you at Rock Paper Scissors (hopefully)</title>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+		<link rel="stylesheet" href="css/style.css">
+	</head>
+	<body>
+		<!-- <nav class="navbar navbar-expand-sm navbar-light bg-light">
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item">
+					<h1 class="navbar-brand">NN RPS</h1>
+				</li>
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Profiles</a>
+					<div class="dropdown-menu">
+						<a class="dropdown-item" href="#">(+)</a>
+						<a class="dropdown-item selected" href="#">Session</a>
+						<div class="dropdown-divider"></div>
+					</div>
+				</li>
+			</ul>
+		</nav> -->
+		<div id="chart"></div>
+		<main class="container-fluid">
+			<div class="row">
+				<div class="col">
+					<ol id="human-choices">
+						<li class="rock"></li>
+						<li class="paper"></li>
+						<li class="scissors"></li>
+					</ol>
+					<div id="human" class="choice rock"></div>
+				</div>
+				<div class="col">
+					<img class="busy" src="img/thinking.gif" />
+					<div id="ai" class="choice rock"></div>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/neataptic@1.4.7/dist/neataptic.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/frappe-charts/1.0.0/frappe-charts.min.iife.js"></script>
+
+		<script type="text/javascript" src="js/ai.js"></script>
+		<script type="text/javascript" src="js/ui.js"></script>
+	</body>
+</html>

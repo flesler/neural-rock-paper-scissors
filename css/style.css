@@ -1,0 +1,101 @@
+/* Main */
+
+.thinking, .ended {
+	pointer-events: none;
+}
+		.ready .busy, .ended .busy {
+			visibility: hidden;
+		}
+
+main {
+	margin-top: 20px;
+}
+
+	main .col {
+		min-width: 617px;
+	}
+
+	#human-choices {
+		display: block;
+		width: 100%;
+		text-align: center;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+		#human-choices li {
+			cursor: pointer;
+			background-image: url(../img/rps.png);
+			background-repeat: no-repeat;
+			background-size: cover;
+			width: 70px;
+			height: 50px;
+			display: inline-block;
+			margin: 0 30px;
+		}
+
+		#human-choices .paper {
+			background-position: 0 0;
+		}
+
+		#human-choices .rock {
+			background-position: 0 -50px;
+			height: 25px;
+			margin-bottom: 9px;
+		}
+
+		#human-choices .scissors {
+			background-position: 0 -74px;
+			height: 33px;
+		}
+
+	.choice {
+		background-image: url(../img/rps.png);
+		background-repeat: no-repeat;
+		/* background-size: cover; */
+		display: block;
+		width: 100%;
+	}
+
+	#ai.choice {
+		transform-origin: 50% 0;
+		transform: scaleX(-1);
+		filter: FlipH;
+	}
+
+	.choice.paper {
+		height: 439px;
+		background-position: 0 0;
+	}
+
+	.choice.rock {
+		height: 220px;
+		margin-top: 109.5px;
+		background-position: 0 -439px;
+	}
+
+	.choice.scissors {
+		height: 215px;
+		margin-top: 112px;
+		background-position: 0 -659px;
+	}
+
+	@keyframes tilt {
+		from { opacity: 1; }
+		to { opacity: 0.3; }
+	}
+
+	.choice.lost {
+		animation-name: tilt;
+		animation-duration: 0.3s;
+		animation-iteration-count: 6;
+		animation-direction: alternate;
+		animation-timing-function: ease-in-out;
+	}
+
+	.busy {
+		height: 50px;
+		display: block;
+		margin: 0 auto;
+	}
