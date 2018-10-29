@@ -73,6 +73,7 @@ function createMatch(choice, result) {
 //---------------------- UI --------------------------------//
 
 const OPTIONS = ['rock', 'paper', 'scissors']
+const MAX_DATAPOINTS = 20
 
 // Game flow
 
@@ -138,17 +139,30 @@ function showChoice(id, choice, lost) {
 
 // Chart
 const chartData = {
-	labels: ['', ''],
+	labels: [],
 	datasets: [
-		{ name: 'Human', values: [0, 0] },
-		{ name: 'AI', values: [0, 0] },
+		{ name: 'Human', values: [] },
+		{ name: 'Tie', values: [] },
+		{ name: 'AI', values: [] },
 	]
 }
 
+for (let i = 0; i < MAX_DATAPOINTS; i++) {
+	chartData.labels.push('')
+	for (const dataset of chartData.datasets) {
+		dataset.values.push(0)
+	}
+}
+
 const chart = new Chart('#chart', {
-	type: 'line',
-	height: 100,
-	data: chartData
+	type: 'bar',
+	height: 150,
+	data: chartData,
+	barOptions: {
+		spaceRatio: 0.2,
+		stacked: 1,
+	},
+	colors: ['#0F0', '#CCC', '#00F']
 })
 
 function updateChart() {
@@ -164,12 +178,11 @@ function updateChart() {
 
 	chartData.labels.push(matches.length.toString())
 	chartData.datasets[0].values.push(human)
-	chartData.datasets[1].values.push(ai)
+	chartData.datasets[1].values.push(matches.length - human - ai)
+	chartData.datasets[2].values.push(ai)
 
-	if (chartData.labels.length > 15) {
-		chartData.labels.shift()
-		chartData.datasets.forEach(d => d.values.shift())
-	}
+	chartData.labels.shift()
+	chartData.datasets.forEach(d => d.values.shift())
 
 	chart.update(chartData)
 }
