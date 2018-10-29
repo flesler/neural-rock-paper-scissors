@@ -73,7 +73,7 @@ function createMatch(choice, result) {
 //---------------------- UI --------------------------------//
 
 const OPTIONS = ['rock', 'paper', 'scissors']
-const MAX_DATAPOINTS = 20
+const MAX_DATAPOINTS = 15
 
 // Game flow
 
@@ -138,32 +138,28 @@ function showChoice(id, choice, lost) {
 }
 
 // Chart
-const chartData = {
-	labels: [],
-	datasets: [
-		{ name: 'Human', values: [] },
-		{ name: 'Tie', values: [] },
-		{ name: 'AI', values: [] },
-	]
-}
 
-for (let i = 0; i < MAX_DATAPOINTS; i++) {
-	chartData.labels.push('')
-	for (const dataset of chartData.datasets) {
-		dataset.values.push(0)
-	}
-}
-
-const chart = new Chart('#chart', {
+const chart = new frappe.Chart('#chart', {
 	type: 'bar',
-	height: 150,
-	data: chartData,
+	height: 250,
+	data: {
+		labels: [],
+		datasets: [
+			{ name: 'AI', values: [] },
+			{ name: 'Tie', values: [] },
+			{ name: 'Human', values: [] },
+		]
+	},
 	barOptions: {
 		spaceRatio: 0.2,
 		stacked: 1,
 	},
-	colors: ['#0F0', '#CCC', '#00F']
+	colors: ['#0F0', '#CCC', '#F00'],
 })
+
+for (let i = 0; i < MAX_DATAPOINTS; i++) {
+	chart.addDataPoint('', [0, 0, 0])
+}
 
 function updateChart() {
 	let ai = 0
@@ -175,16 +171,11 @@ function updateChart() {
 			human++
 		}
 	}
+	const total = matches.length
+	const tie = total - ai - human
 
-	chartData.labels.push(matches.length.toString())
-	chartData.datasets[0].values.push(human)
-	chartData.datasets[1].values.push(matches.length - human - ai)
-	chartData.datasets[2].values.push(ai)
-
-	chartData.labels.shift()
-	chartData.datasets.forEach(d => d.values.shift())
-
-	chart.update(chartData)
+	chart.removeDataPoint(0)
+	chart.addDataPoint(total.toString(), [ai, tie, human])
 }
 
 startGame()

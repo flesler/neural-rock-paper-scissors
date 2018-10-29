@@ -115,4 +115,13 @@ main {
 	max-width: 600px;
 	margin: 0 auto;
 	display: block;
+	height: 180px;
 }
+
+	.chart-container {
+		height: 100%;
+	}
+
+	g.chart-legend {
+		display: none;
+	}
