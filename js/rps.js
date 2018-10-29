@@ -1,6 +1,6 @@
 //---------------------- AI --------------------------------//
 // TODO: Add more inputs, the relative step from previous choice
-// TODO: Maybe add an output on how likely to get tricked and do the opposite
+// TODO: Maybe add an output on how likely to get tricked and do the opposite (2 lossses or 2 wins)
 (function() {
 
 // neural network settings
@@ -14,9 +14,11 @@ const TRAIN_OPTIONS = {
 	momentum: 0.9
 }
 
+const OPTIONS = ['rock', 'paper', 'scissors']
+
 const MEMORY_BLOCKS = 8
-const OUTPUTS = 3
-const INPUTS = OUTPUTS + 2
+const OUTPUTS = OPTIONS.length
+const INPUTS = OPTIONS.length + 4
 // Change to invalidate stored state
 const VERSION = 2
 
@@ -51,10 +53,15 @@ ai.record = function (choice, result) {
 	matches.push(match)
 }
 
+
+function beats(choice) {
+	return (choice + 1) % OPTIONS.length
+}
+
 ai.predict = function () {
 	const prev = matches[matches.length - 1]
 	if (!prev) {
-		return Math.floor(Math.random() * OUTPUTS)
+		return Math.floor(Math.random() * OPTIONS.length)
 	}
 	const output = ai.activate(prev.input)
 	let max = output[0]
@@ -72,19 +79,31 @@ ai.predict = function () {
 function createMatch(choice, result, prev) {
 	const match = { choice: choice, result: result, input: [], output: [] }
 	const input = match.input
-	for (let i = 0; i < OUTPUTS; i++) {
+	const output = match.output
+	for (let i = 0; i < OPTIONS.length; i++) {
 		input[i] = match.output[i] = i === choice ? 1 : 0
 	}
 	// Track who won
 	input.push(result)
 	// Track if they picked the same option again
 	input.push(prev && prev.choice === choice ? 1 : 0)
+	// Track if the result is repeating
+	input.push(prev && prev.result === result ? 1 : 0)
+	// Add bias
+	input.push(1)
+
+	if (input.length !== INPUTS) {
+		throw new Error('input size mismatch')
+	}
+
+	if (output.length !== OUTPUTS) {
+		throw new Error('output size mismatch')
+	}
 	return match
 }
 
 //---------------------- UI --------------------------------//
 
-const OPTIONS = ['rock', 'paper', 'scissors']
 const MAX_DATAPOINTS = 15
 
 // Game flow
@@ -127,10 +146,6 @@ document.getElementById('human-choices').onclick = function(e) {
 	showChoice('human', choice, result !== HUMAN)
 	showChoice('ai', beats(prediction), result !== AI)
 	endGame(choice, result)
-}
-
-function beats(choice) {
-	return (choice + 1) % OPTIONS.length
 }
 
 function getResult(choice) {
