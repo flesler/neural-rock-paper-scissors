@@ -13,7 +13,7 @@
 }
 
 h1 {
-	margin: 10px;
+	margin: 20px;
 }
 
 /* Main */
@@ -23,15 +23,16 @@ main {
 
 	main .col {
 		min-width: 617px;
+		padding: 0;
 	}
 
 	#human-choices {
 		display: block;
 		width: 100%;
-		text-align: center;
 		list-style: none;
 		margin: 0;
 		padding: 0;
+		margin-bottom: 20px;
 	}
 
 		#human-choices li {
@@ -39,25 +40,25 @@ main {
 			background-image: url(../img/rps.png);
 			background-repeat: no-repeat;
 			background-size: cover;
-			width: 70px;
-			height: 50px;
+			width: 100px;
 			display: inline-block;
-			margin: 0 30px;
+			margin: 0 40px;
 		}
 
 		#human-choices .paper {
 			background-position: 0 0;
+			height: 71px;
 		}
 
 		#human-choices .rock {
-			background-position: 0 -50px;
-			height: 25px;
+			background-position: 0 -71px;
+			height: 36px;
 			margin-bottom: 9px;
 		}
 
 		#human-choices .scissors {
-			background-position: 0 -74px;
-			height: 33px;
+			background-position: 0 -107px;
+			height: 40px;
 		}
 
 	.choice {
@@ -105,7 +106,7 @@ main {
 	}
 
 	.busy {
-		height: 50px;
+		height: 77px;
 		display: block;
-		margin: 0 auto;
+		margin: 0 auto 20px auto;
 	}
