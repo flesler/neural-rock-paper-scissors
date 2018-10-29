@@ -1,4 +1,6 @@
 //---------------------- AI --------------------------------//
+// TODO: Add more inputs, the relative step from previous choice
+// TODO: Maybe add an output on how likely to get tricked and do the opposite
 (function() {
 
 // neural network settings
@@ -6,13 +8,17 @@
 const TRAIN_OPTIONS = {
 	log: 0,
 	iterations: 6000,
-	error: 0.005,
+	error: 0.03,
 	clear: true,
-	rate: 0.1,
+	rate: 0.9,
+	momentum: 0.9
 }
 
 const MEMORY_BLOCKS = 8
 const OUTPUTS = 3
+const INPUTS = OUTPUTS + 2
+// Change to invalidate stored state
+const VERSION = 2
 
 // Values
 
@@ -22,10 +28,9 @@ const TIE = 0.5
 
 const STORAGE = 'brain'
 
-
-const ai = localStorage.getItem(STORAGE) ?
-		neataptic.Network.fromJSON(JSON.parse(localStorage.getItem(STORAGE))) :
-		new neataptic.architect.LSTM(OUTPUTS + 1, MEMORY_BLOCKS, MEMORY_BLOCKS, OUTPUTS);
+const stored = JSON.parse(localStorage.getItem(STORAGE) || '{}')
+const ai = stored.version === VERSION ? neataptic.Network.fromJSON(stored) :
+		new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS);
 
 let matches = []
 
@@ -34,11 +39,14 @@ ai.reset = function() {
 }
 
 ai.record = function (choice, result) {
-	const match = createMatch(choice, result)
 	const prev = matches[matches.length - 1]
+	const match = createMatch(choice, result, prev)
 	if (prev) {
 		ai.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
-		localStorage.setItem(STORAGE, JSON.stringify(ai.toJSON()))
+
+		const state = ai.toJSON()
+		state.version = VERSION
+		localStorage.setItem(STORAGE, JSON.stringify(state))
 	}
 	matches.push(match)
 }
@@ -61,12 +69,16 @@ ai.predict = function () {
 	return prediction
 }
 
-function createMatch(choice, result) {
+function createMatch(choice, result, prev) {
 	const match = { choice: choice, result: result, input: [], output: [] }
+	const input = match.input
 	for (let i = 0; i < OUTPUTS; i++) {
-		match.input[i] = match.output[i] = i === choice ? 1 : 0
+		input[i] = match.output[i] = i === choice ? 1 : 0
 	}
-	match.input.push(result)
+	// Track who won
+	input.push(result)
+	// Track if they picked the same option again
+	input.push(prev && prev.choice === choice ? 1 : 0)
 	return match
 }
 
