@@ -10,15 +10,15 @@ const TRAIN_OPTIONS = {
 	iterations: 6000,
 	error: 0.03,
 	clear: true,
-	rate: 0.9,
-	momentum: 0.9
+	rate: 0.3,
+	momentum: 0.3
 }
 
 const OPTIONS = ['rock', 'paper', 'scissors']
 
 const MEMORY_BLOCKS = 8
 const OUTPUTS = OPTIONS.length
-const INPUTS = OPTIONS.length + 4
+const INPUTS = OPTIONS.length + 2
 // Change to invalidate stored state
 const VERSION = 2
 
@@ -81,16 +81,12 @@ function createMatch(choice, result, prev) {
 	const input = match.input
 	const output = match.output
 	for (let i = 0; i < OPTIONS.length; i++) {
-		input[i] = match.output[i] = i === choice ? 1 : 0
+		input[i] = output[i] = i === choice ? 1 : 0
 	}
 	// Track who won
 	input.push(result)
 	// Track if they picked the same option again
 	input.push(prev && prev.choice === choice ? 1 : 0)
-	// Track if the result is repeating
-	input.push(prev && prev.result === result ? 1 : 0)
-	// Add bias
-	input.push(1)
 
 	if (input.length !== INPUTS) {
 		throw new Error('input size mismatch')
