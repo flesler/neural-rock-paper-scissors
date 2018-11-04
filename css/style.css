@@ -1,5 +1,5 @@
 
-.thinking, .ended {
+.initializing, .thinking, .ended {
 	pointer-events: none;
 }
 .ready .busy, .ended .busy {
@@ -116,6 +116,10 @@ main {
 	margin: 0 auto;
 	display: block;
 	height: 180px;
+}
+
+.initializing #chart {
+	visibility: hidden;
 }
 
 	.chart-container {

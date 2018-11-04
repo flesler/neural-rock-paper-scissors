@@ -9,17 +9,18 @@
 const TRAIN_OPTIONS = {
 	log: 0,
 	iterations: 6000,
-	error: 0.005,
+	error: 0.2,
 	clear: true,
 	rate: 0.3,
 	momentum: 0.3
 }
 
 const OPTIONS = ['rock', 'paper', 'scissors']
+const DIRECTIONS = [-1, 0, 1]
 
 const MEMORY_BLOCKS = 4
-const OUTPUTS = OPTIONS.length
-const INPUTS = OPTIONS.length + 1
+const INPUTS = DIRECTIONS.length + 1
+const OUTPUTS = DIRECTIONS.length
 // Change to invalidate stored state
 const VERSION = 2
 
@@ -55,35 +56,48 @@ function option(choice, delta = +1) {
 	return (choice + delta + OPTIONS.length) % OPTIONS.length
 }
 
+function getWinner(human, ai) {
+	switch (ai) {
+		case human: return TIE
+		case option(human): return AI
+		default: return HUMAN
+	}
+}
+
 function predict() {
 	// Do a few random for learning
-	if (matches.length < MEMORY_BLOCKS) {
+	if (matches.length - 1 < MEMORY_BLOCKS) {
 		return Math.floor(Math.random() * OPTIONS.length)
 	}
 	const prev = matches[matches.length - 1]
 	const output = nn.activate(prev.input)
 	let max = output[0]
-	let prediction = 0
-	for (let i = 1; i < OPTIONS.length; i++) {
+	let dir = 0
+	for (let i = 1; i < DIRECTIONS.length; i++) {
 		if (output[i] > max) {
 			max = output[i]
-			prediction = i
+			dir = i
 		}
 	}
-
-	return prediction
+	// Try to guess in which direction they'll move from the last one
+	return option(prev.human, DIRECTIONS[dir])
 }
 
 function createMatch(human, ai, prev) {
 	const match = { human: human, ai: ai }
-	const input = match.input = []
-	const output = match.output = []
-	for (let i = 0; i < OPTIONS.length; i++) {
-		input[i] = output[i] = i === human ? 1 : 0
+	if (!prev) {
+		// First the 2nd match assume no direction
+		prev = match
 	}
-	input.push(getWinner(human, ai))
 
-	if (input.length !== INPUTS) {
+	const dir = option(human - prev.human)
+	const output = match.output = []
+	for (let i = 0; i < DIRECTIONS.length; i++) {
+		output[i] = i === dir ? 1 : 0
+	}
+	match.input = output.concat(getWinner(human, ai))
+
+	if (match.input.length !== INPUTS) {
 		throw new Error('input size mismatch')
 	}
 
@@ -141,14 +155,6 @@ document.getElementById('human-choices').onclick = function(e) {
 	endGame(human, ai)
 }
 
-function getWinner(human, ai) {
-	switch (ai) {
-		case human: return TIE
-		case option(human): return AI
-		default: return HUMAN
-	}
-}
-
 function showChoice(id, choice, lost) {
 	const elem = document.getElementById(id)
 	OPTIONS.forEach(function(label, i) {
@@ -177,10 +183,6 @@ const chart = new frappe.Chart('#chart', {
 	colors: ['#0F0', '#CCC', '#F00'],
 })
 
-for (let i = 0; i < MAX_DATAPOINTS; i++) {
-	chart.addDataPoint('', [0, 0, 0])
-}
-
 function updateChart() {
 	let ai = 0
 	let human = 0
@@ -199,22 +201,31 @@ function updateChart() {
 	chart.addDataPoint(total.toString(), [ai, tie, human])
 }
 
-if (localStorage.getItem(STORAGE)) {
-	const nums = localStorage.getItem(STORAGE)
-		.split('').map(function(n) { return parseInt(n) })
-	// If version doesn't match, ignore it
-	if (nums.shift() !== VERSION) {
-		nums.length = 0
+function init() {
+	for (let i = 0; i < MAX_DATAPOINTS; i++) {
+		chart.addDataPoint('', [0, 0, 0])
 	}
-	const len = OPTIONS.length
-	for (const num of nums) {
-		const human = num % len
-		const ai = (num - human) / len
-		record(human, ai)
-		updateChart()
+
+	if (localStorage.getItem(STORAGE)) {
+		const nums = localStorage.getItem(STORAGE)
+			.split('').map(function(n) { return parseInt(n) })
+		// If version doesn't match, ignore it
+		if (nums.shift() !== VERSION) {
+			nums.length = 0
+		}
+		const len = OPTIONS.length
+		for (const num of nums) {
+			const human = num % len
+			const ai = (num - human) / len
+			record(human, ai)
+			updateChart()
+		}
 	}
+
+	startGame()
 }
 
-startGame()
+setState('initializing')
+setTimeout(init, 1)
 
 })()
