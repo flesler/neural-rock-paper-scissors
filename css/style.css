@@ -123,5 +123,5 @@ main {
 	}
 
 	g.chart-legend {
-		display: none;
+		transform: translate(30%, 3px);
 	}

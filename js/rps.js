@@ -24,22 +24,21 @@ const INPUTS = OPTIONS.length + 1
 const VERSION = 2
 
 // Values
-
 const HUMAN = 0
 const AI = 1
 const TIE = 0.5
 
 const STORAGE = 'brain'
 
-const ai = new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS);
+const nn = new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS);
 
 let matches = []
 
-function record(choice, result) {
+function record(human, ai) {
 	const prev = matches[matches.length - 1]
-	const match = createMatch(choice, result, prev)
+	const match = createMatch(human, ai, prev)
 	if (prev) {
-		ai.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
+		nn.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
 	}
 	matches.push(match)
 }
@@ -47,17 +46,13 @@ function record(choice, result) {
 function save() {
 	const nums = [VERSION]
 	for (const match of matches) {
-		let result = match.result
-		if (result === TIE) {
-			result = VERSION
-		}
-		nums.push(match.choice, result)
+		nums.push(match.human + (match.ai * OPTIONS.length))
 	}
 	localStorage.setItem(STORAGE, nums.join(''))
 }
 
-function beats(choice) {
-	return (choice + 1) % OPTIONS.length
+function option(choice, delta = +1) {
+	return (choice + delta + OPTIONS.length) % OPTIONS.length
 }
 
 function predict() {
@@ -66,7 +61,7 @@ function predict() {
 		return Math.floor(Math.random() * OPTIONS.length)
 	}
 	const prev = matches[matches.length - 1]
-	const output = ai.activate(prev.input)
+	const output = nn.activate(prev.input)
 	let max = output[0]
 	let prediction = 0
 	for (let i = 1; i < OPTIONS.length; i++) {
@@ -79,15 +74,14 @@ function predict() {
 	return prediction
 }
 
-function createMatch(choice, result, prev) {
-	const match = { choice: choice, result: result, input: [], output: [] }
-	const input = match.input
-	const output = match.output
+function createMatch(human, ai, prev) {
+	const match = { human: human, ai: ai }
+	const input = match.input = []
+	const output = match.output = []
 	for (let i = 0; i < OPTIONS.length; i++) {
-		input[i] = output[i] = i === choice ? 1 : 0
+		input[i] = output[i] = i === human ? 1 : 0
 	}
-	// Track who won
-	input.push(result)
+	input.push(getWinner(human, ai))
 
 	if (input.length !== INPUTS) {
 		throw new Error('input size mismatch')
@@ -115,9 +109,9 @@ function startGame() {
 	setState('ready')
 }
 
-function endGame(choice, result) {
+function endGame(human, ai) {
 	setState('thinking')
-	record(choice, result)
+	record(human, ai)
 	updateChart()
 	save()
 	setState('ended')
@@ -136,20 +130,21 @@ document.getElementById('reset').onclick = function () {
 // Human choices
 
 document.getElementById('human-choices').onclick = function(e) {
-	const choice = OPTIONS.indexOf(e.target.className)
-	if (choice === -1) {
+	const human = OPTIONS.indexOf(e.target.className)
+	if (human === -1) {
 		return
 	}
-	const result = getResult(choice)
-	showChoice('human', choice, result !== HUMAN)
-	showChoice('ai', beats(prediction), result !== AI)
-	endGame(choice, result)
+	const ai = option(prediction)
+	const winner = getWinner(human, ai)
+	showChoice('human', human, winner !== HUMAN)
+	showChoice('ai', ai, winner !== AI)
+	endGame(human, ai)
 }
 
-function getResult(choice) {
-	switch (choice) {
-		case prediction: return AI
-		case beats(prediction): return TIE
+function getWinner(human, ai) {
+	switch (ai) {
+		case human: return TIE
+		case option(human): return AI
 		default: return HUMAN
 	}
 }
@@ -190,9 +185,10 @@ function updateChart() {
 	let ai = 0
 	let human = 0
 	for (const match of matches) {
-		if (match.result === AI) {
+		const winner = getWinner(match.human, match.ai)
+		if (winner === AI) {
 			ai++
-		} else if (match.result === HUMAN) {
+		} else if (winner === HUMAN) {
 			human++
 		}
 	}
@@ -207,15 +203,14 @@ if (localStorage.getItem(STORAGE)) {
 	const nums = localStorage.getItem(STORAGE)
 		.split('').map(function(n) { return parseInt(n) })
 	// If version doesn't match, ignore it
-	if (nums[0] !== VERSION) {
+	if (nums.shift() !== VERSION) {
 		nums.length = 0
 	}
-	for (let i = 1; i < nums.length; i += 2) {
-		let result = nums[i + 1]
-		if (result === VERSION) {
-			result = TIE
-		}
-		record(nums[i], result)
+	const len = OPTIONS.length
+	for (const num of nums) {
+		const human = num % len
+		const ai = (num - human) / len
+		record(human, ai)
 		updateChart()
 	}
 }
