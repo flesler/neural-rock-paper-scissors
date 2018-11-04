@@ -1,5 +1,6 @@
 //---------------------- AI --------------------------------//
 // TODO: Add more inputs, the relative step from previous choice
+// TODO: I think I should overhaul so that outputs are delta from last and not options
 // TODO: Maybe add an output on how likely to get tricked and do the opposite (2 lossses or 2 wins)
 (function() {
 
@@ -8,7 +9,7 @@
 const TRAIN_OPTIONS = {
 	log: 0,
 	iterations: 6000,
-	error: 0.03,
+	error: 0.005,
 	clear: true,
 	rate: 0.3,
 	momentum: 0.3
@@ -30,29 +31,30 @@ const TIE = 0.5
 
 const STORAGE = 'brain'
 
-const stored = JSON.parse(localStorage.getItem(STORAGE) || '{}')
-const ai = stored.version === VERSION ? neataptic.Network.fromJSON(stored) :
-		new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS);
+const ai = new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS);
 
 let matches = []
 
-ai.reset = function() {
-	localStorage.removeItem(STORAGE)
-}
-
-ai.record = function (choice, result) {
+function record(choice, result) {
 	const prev = matches[matches.length - 1]
 	const match = createMatch(choice, result, prev)
 	if (prev) {
 		ai.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
-
-		const state = ai.toJSON()
-		state.version = VERSION
-		localStorage.setItem(STORAGE, JSON.stringify(state))
 	}
 	matches.push(match)
 }
 
+function save() {
+	const nums = [VERSION]
+	for (const match of matches) {
+		let result = match.result
+		if (result === TIE) {
+			result = VERSION
+		}
+		nums.push(match.choice, result)
+	}
+	localStorage.setItem(STORAGE, nums.join(''))
+}
 
 function beats(choice) {
 	return (choice + 1) % OPTIONS.length
@@ -66,7 +68,7 @@ ai.predict = function () {
 	const output = ai.activate(prev.input)
 	let max = output[0]
 	let prediction = 0
-	for (let i = 1; i < output.length; i++) {
+	for (let i = 1; i < OPTIONS.length; i++) {
 		if (output[i] > max) {
 			max = output[i]
 			prediction = i
@@ -116,8 +118,9 @@ function startGame() {
 
 function endGame(choice, result) {
 	setState('thinking')
-	ai.record(choice, result)
+	record(choice, result)
 	updateChart()
+	save()
 	setState('ended')
 	setTimeout(startGame, 3000)
 }
@@ -127,7 +130,7 @@ function setState(state) {
 }
 
 document.getElementById('reset').onclick = function () {
-	ai.reset()
+	localStorage.removeItem(STORAGE)
 	location.reload()
 }
 
@@ -199,6 +202,23 @@ function updateChart() {
 
 	chart.removeDataPoint(0)
 	chart.addDataPoint(total.toString(), [ai, tie, human])
+}
+
+if (localStorage.getItem(STORAGE)) {
+	const nums = localStorage.getItem(STORAGE)
+		.split('').map(function(n) { return parseInt(n) })
+	// If version doesn't match, ignore it
+	if (nums[0] !== VERSION) {
+		nums.length = 0
+	}
+	for (let i = 1; i < nums.length; i += 2) {
+		let result = nums[i + 1]
+		if (result === VERSION) {
+			result = TIE
+		}
+		record(nums[i], result)
+		updateChart()
+	}
 }
 
 startGame()
