@@ -17,7 +17,7 @@ const TRAIN_OPTIONS = {
 
 const OPTIONS = ['rock', 'paper', 'scissors']
 
-const MEMORY_BLOCKS = 8
+const MEMORY_BLOCKS = 4
 const OUTPUTS = OPTIONS.length
 const INPUTS = OPTIONS.length + 2
 // Change to invalidate stored state
@@ -61,10 +61,11 @@ function beats(choice) {
 }
 
 ai.predict = function () {
-	const prev = matches[matches.length - 1]
-	if (!prev) {
+	// Do a few random for learning
+	if (matches.length < MEMORY_BLOCKS) {
 		return Math.floor(Math.random() * OPTIONS.length)
 	}
+	const prev = matches[matches.length - 1]
 	const output = ai.activate(prev.input)
 	let max = output[0]
 	let prediction = 0
