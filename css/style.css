@@ -78,9 +78,9 @@ main {
 
 #chart {
 	max-width: 600px;
-	margin: 0 auto;
+	margin: 0 auto 1vh auto;
 	display: block;
-	height: 220px;
+	height: 150px;
 }
 
 	.chart-container {

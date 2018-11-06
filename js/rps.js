@@ -177,7 +177,7 @@ function showChoice(id, choice, lost) {
 
 const chart = new frappe.Chart('#chart', {
 	type: 'bar',
-	height: 250,
+	height: 200,
 	data: {
 		labels: [],
 		datasets: [
