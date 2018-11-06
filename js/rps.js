@@ -1,5 +1,6 @@
 //---------------------- AI --------------------------------//
 // TODO: Maybe add an output on how likely to get tricked and do the opposite (2 lossses or 2 wins)
+// TODO: Create a test suite that repeats various patterns and evaluates the win rate on each to find weak spots
 (function() {
 
 // neural network settings
@@ -115,9 +116,13 @@ const MAX_DATAPOINTS = 15
 
 let prediction
 
-function startGame() {
+function reset() {
 	showChoice('human', 0, false)
 	showChoice('ai', 0, false)
+}
+
+function startGame() {
+	reset()
 	setState('thinking')
 	prediction = predict()
 	setState('ready')
@@ -143,11 +148,18 @@ document.getElementById('reset').onclick = function () {
 
 // Human choices
 
-document.getElementById('human-choices').onclick = function(e) {
-	const human = OPTIONS.indexOf(e.target.className)
-	if (human === -1) {
-		return
+const humanChoices = document.getElementById('human-choices')
+OPTIONS.forEach(function(option, choice) {
+	const img = document.createElement('img')
+	img.className = option
+	img.src = 'img/' + option + '.png'
+	img.onclick = function() {
+		choose(choice)
 	}
+	humanChoices.appendChild(img)
+})
+
+function choose(human) {
 	const ai = option(prediction)
 	const winner = getWinner(human, ai)
 	showChoice('human', human, winner !== HUMAN)
@@ -157,9 +169,7 @@ document.getElementById('human-choices').onclick = function(e) {
 
 function showChoice(id, choice, lost) {
 	const elem = document.getElementById(id)
-	OPTIONS.forEach(function(label, i) {
-		elem.classList.toggle(label, i === choice)
-	})
+	elem.src = 'img/' + OPTIONS[choice] + '.png'
 	elem.classList.toggle('lost', lost)
 }
 
@@ -240,6 +250,7 @@ function step(queue) {
 }
 
 setState('initializing')
+reset()
 init()
 
 })()

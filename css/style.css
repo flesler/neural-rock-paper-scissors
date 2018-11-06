@@ -8,88 +8,53 @@
 
 #reset {
 	position: absolute;
-	right: 5px;
-	top: 5px;
+	right: 2vw;
+	top: 1vh;
 }
 
 h1 {
-	margin: 20px;
+	margin: 1vh 0vw 4vh 2vw;
+	font-size: 2.2rem;
 }
 
 /* Main */
 main {
-	margin-top: 20px;
+	margin-top: 1vh;
 }
 
 	main .col {
-		min-width: 617px;
 		padding: 0;
 	}
 
 	#human-choices {
 		display: block;
 		width: 100%;
-		list-style: none;
 		margin: 0;
 		padding: 0;
-		margin-bottom: 20px;
+		position: relative;
 	}
 
-		#human-choices li {
+		#human-choices img {
 			cursor: pointer;
-			background-image: url(../img/rps.png);
-			background-repeat: no-repeat;
-			background-size: cover;
-			width: 100px;
+			width: 30%;
 			display: inline-block;
-			margin: 0 40px;
 		}
 
 		#human-choices .paper {
-			background-position: 0 0;
-			height: 71px;
-		}
-
-		#human-choices .rock {
-			background-position: 0 -71px;
-			height: 36px;
-			margin-bottom: 9px;
-		}
-
-		#human-choices .scissors {
-			background-position: 0 -107px;
-			height: 40px;
+			margin: 0 5%;
 		}
 
 	.choice {
-		background-image: url(../img/rps.png);
-		background-repeat: no-repeat;
-		/* background-size: cover; */
-		display: block;
+		margin: 5vh 0 7vh;
+		display: inline-block;
 		width: 100%;
+		padding-right: 10%;
 	}
 
 	#ai.choice {
 		transform-origin: 50% 0;
 		transform: scaleX(-1);
 		filter: FlipH;
-	}
-
-	.choice.paper {
-		height: 439px;
-		background-position: 0 0;
-	}
-
-	.choice.rock {
-		height: 220px;
-		margin-top: 109.5px;
-		background-position: 0 -439px;
-	}
-
-	.choice.scissors {
-		height: 215px;
-		margin-top: 112px;
-		background-position: 0 -659px;
 	}
 
 	@keyframes tilt {
@@ -106,16 +71,16 @@ main {
 	}
 
 	.busy {
-		height: 77px;
+		height: 10.7vw;
 		display: block;
-		margin: 0 auto 20px auto;
+		margin: 0 auto;
 	}
 
 #chart {
 	max-width: 600px;
 	margin: 0 auto;
 	display: block;
-	height: 180px;
+	height: 220px;
 }
 
 	.chart-container {
