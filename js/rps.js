@@ -174,7 +174,8 @@ const chart = new frappe.Chart('#chart', {
 			{ name: 'AI', values: [] },
 			{ name: 'Tie', values: [] },
 			{ name: 'Human', values: [] },
-		]
+		],
+		yMarkers: [{ label: '', value: 0, options: { labelPos: 'right' } }],
 	},
 	barOptions: {
 		spaceRatio: 0.2,
@@ -200,6 +201,8 @@ function updateChart() {
 	if (chart.data.labels.length >= MAX_DATAPOINTS) {
 		chart.removeDataPoint(0)
 	}
+
+	chart.data.yMarkers[0].value = total / 2
 	chart.addDataPoint(total || '', [ai, tie, human])
 }
 

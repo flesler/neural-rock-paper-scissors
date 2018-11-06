@@ -125,3 +125,7 @@ main {
 	g.chart-legend {
 		transform: translate(30%, 3px);
 	}
+
+	g.y-markers line {
+		stroke: #777 !important;
+	}
