@@ -118,10 +118,6 @@ main {
 	height: 180px;
 }
 
-.initializing #chart {
-	visibility: hidden;
-}
-
 	.chart-container {
 		height: 100%;
 	}

@@ -197,15 +197,14 @@ function updateChart() {
 	const total = matches.length
 	const tie = total - ai - human
 
-	chart.removeDataPoint(0)
-	chart.addDataPoint(total.toString(), [ai, tie, human])
+	if (chart.data.labels.length >= MAX_DATAPOINTS) {
+		chart.removeDataPoint(0)
+	}
+	chart.addDataPoint(total || '', [ai, tie, human])
 }
 
 function init() {
-	for (let i = 0; i < MAX_DATAPOINTS; i++) {
-		chart.addDataPoint('', [0, 0, 0])
-	}
-
+	const queue = []
 	if (localStorage.getItem(STORAGE)) {
 		const nums = localStorage.getItem(STORAGE)
 			.split('').map(function(n) { return parseInt(n) })
@@ -217,15 +216,27 @@ function init() {
 		for (const num of nums) {
 			const human = num % len
 			const ai = (num - human) / len
-			record(human, ai)
-			updateChart()
+			queue.push([human, ai])
 		}
 	}
 
-	startGame()
+	for (let i = queue.length; i < MAX_DATAPOINTS; i++) {
+		updateChart()
+	}
+	step(queue)
+}
+
+function step(queue) {
+	if (!queue.length) {
+		return startGame()
+	}
+	const [human, ai] = queue.shift()
+	record(human, ai)
+	updateChart()
+	setTimeout(step, 100, queue)
 }
 
 setState('initializing')
-setTimeout(init, 1)
+init()
 
 })()
