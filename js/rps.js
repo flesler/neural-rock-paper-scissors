@@ -1,6 +1,4 @@
 //---------------------- AI --------------------------------//
-// TODO: Add more inputs, the relative step from previous choice
-// TODO: I think I should overhaul so that outputs are delta from last and not options
 // TODO: Maybe add an output on how likely to get tricked and do the opposite (2 lossses or 2 wins)
 (function() {
 
@@ -8,11 +6,12 @@
 
 const TRAIN_OPTIONS = {
 	log: 0,
-	iterations: 6000,
-	error: 0.2,
 	clear: true,
-	rate: 0.3,
-	momentum: 0.3
+	error: 0.2,
+	momentum: 0.3,
+	rate: 0.4,
+	ratePolicy: neataptic.methods.rate.FIXED(),
+	cost: neataptic.methods.cost.CROSS_ENTROPY
 }
 
 const OPTIONS = ['rock', 'paper', 'scissors']
@@ -39,7 +38,8 @@ function record(human, ai) {
 	const prev = matches[matches.length - 1]
 	const match = createMatch(human, ai, prev)
 	if (prev) {
-		nn.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
+		const { error } = nn.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
+		nn.error = error
 	}
 	matches.push(match)
 }
