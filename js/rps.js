@@ -5,14 +5,23 @@
 
 // neural network settings
 
-const TRAIN_OPTIONS = {
+const AI_OPTIONS = {
 	log: 0,
-	clear: true,
+	clear: false,
 	error: 0.2,
 	momentum: 0.3,
 	rate: 0.4,
 	ratePolicy: neataptic.methods.rate.FIXED(),
-	cost: neataptic.methods.cost.CROSS_ENTROPY
+	cost: neataptic.methods.cost.CROSS_ENTROPY,
+	// Evolving
+	mutation: neataptic.methods.mutation.FFW,
+	mutationRate: 0.4,
+	equal: true,
+	elitism: 1,
+	population: 100,
+	iterations: 1000,
+	growth: 0.0001,
+	amount: 1,
 }
 
 const OPTIONS = ['rock', 'paper', 'scissors']
@@ -31,18 +40,22 @@ const TIE = 0.5
 
 const STORAGE = 'brain'
 
-const nn = new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS);
-
+let nn
 let matches = []
 
-function record(human, ai) {
-	const prev = matches[matches.length - 1]
-	const match = createMatch(human, ai, prev)
-	if (prev) {
-		const { error } = nn.train([{ input: prev.input, output: match.output }], TRAIN_OPTIONS)
-		nn.error = error
+function train(done) {
+	const training = []
+	for (let i = 1; i < matches.length; i++) {
+		training.push({ input: matches[i - 1].input, output: matches[i].output })
 	}
-	matches.push(match)
+
+	// Start over on each training session
+	nn = new neataptic.architect.LSTM(INPUTS, MEMORY_BLOCKS, OUTPUTS)
+	if (!training.length) {
+		return done()
+	}
+	nn.evolve(training, AI_OPTIONS).then(done)
+	// nn.train(training, AI_OPTIONS); done()
 }
 
 function save() {
@@ -84,13 +97,10 @@ function predict() {
 	return option(prev.human, DIRECTIONS[dir])
 }
 
-function createMatch(human, ai, prev) {
+function addMatch(human, ai) {
 	const match = { human: human, ai: ai }
-	if (!prev) {
-		// First the 2nd match assume no direction
-		prev = match
-	}
-
+	// First the 2nd match assume no direction
+	const prev = matches[matches.length - 1] || match
 	const dir = option(human - prev.human)
 	const output = match.output = []
 	for (let i = 0; i < DIRECTIONS.length; i++) {
@@ -105,7 +115,7 @@ function createMatch(human, ai, prev) {
 	if (output.length !== OUTPUTS) {
 		throw new Error('output size mismatch')
 	}
-	return match
+	matches.push(match)
 }
 
 //---------------------- UI --------------------------------//
@@ -130,11 +140,13 @@ function startGame() {
 
 function endGame(human, ai) {
 	setState('thinking')
-	record(human, ai)
+	addMatch(human, ai)
 	updateChart()
 	save()
-	setState('ended')
-	setTimeout(startGame, 3000)
+	train(function() {
+		setState('ended')
+		setTimeout(startGame, 3000)
+	})
 }
 
 function setState(state) {
@@ -195,6 +207,9 @@ const chart = new frappe.Chart('#chart', {
 })
 
 function updateChart() {
+	// TEMP
+	return;
+
 	let ai = 0
 	let human = 0
 	for (const match of matches) {
@@ -218,6 +233,9 @@ function updateChart() {
 
 function init() {
 	const queue = []
+	for (let i = 0; i < MAX_DATAPOINTS; i++) {
+		updateChart()
+	}
 	if (localStorage.getItem(STORAGE)) {
 		const nums = localStorage.getItem(STORAGE)
 			.split('').map(function(n) { return parseInt(n) })
@@ -229,28 +247,15 @@ function init() {
 		for (const num of nums) {
 			const human = num % len
 			const ai = (num - human) / len
-			queue.push([human, ai])
+			addMatch(human, ai)
+			updateChart()
 		}
 	}
-
-	for (let i = queue.length; i < MAX_DATAPOINTS; i++) {
-		updateChart()
-	}
-	step(queue)
-}
-
-function step(queue) {
-	if (!queue.length) {
-		return startGame()
-	}
-	const [human, ai] = queue.shift()
-	record(human, ai)
-	updateChart()
-	setTimeout(step, 100, queue)
+	train(startGame)
 }
 
 setState('initializing')
 reset()
-init()
+window.onload = init
 
 })()
