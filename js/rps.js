@@ -188,8 +188,8 @@ const chart = new frappe.Chart('#chart', {
 		labels: [],
 		datasets: [
 			{ name: 'AI', values: [] },
-			{ name: 'Tie', values: [] },
 			{ name: 'Human', values: [] },
+			{ name: 'Tie', values: [] },
 		],
 		yMarkers: [{ label: '', value: 0, options: { labelPos: 'right' } }],
 	},
@@ -197,7 +197,7 @@ const chart = new frappe.Chart('#chart', {
 		spaceRatio: 0.2,
 		stacked: 1,
 	},
-	colors: ['#0F0', '#CCC', '#F00'],
+	colors: ['#0F0', '#F00', '#CCC'],
 })
 
 function updateChart() {
@@ -212,14 +212,13 @@ function updateChart() {
 		}
 	}
 	const total = matches.length
-	const tie = total - ai - human
 
 	if (chart.data.labels.length >= MAX_DATAPOINTS) {
 		chart.removeDataPoint(0)
 	}
-
-	chart.data.yMarkers[0].value = total / 2
-	chart.addDataPoint(total || '', [ai, tie, human])
+	// The marker at human (from 0) is more indicative than avg(ai, human)
+	chart.data.yMarkers[0].value = human
+	chart.addDataPoint(total || '', [ai, human, total - (ai + human)])
 }
 
 function init() {
