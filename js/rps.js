@@ -17,10 +17,11 @@ const TRAIN_OPTIONS = {
 
 const OPTIONS = ['rock', 'paper', 'scissors']
 const DIRECTIONS = [-1, 0, 1]
+const COMBINED = OPTIONS.concat(DIRECTIONS)
 
-const INPUTS = DIRECTIONS.length + OPTIONS.length + 1
-const OUTPUTS = DIRECTIONS.length
-const MEMORY_BLOCKS = OUTPUTS
+const INPUTS = COMBINED.length + 1
+const OUTPUTS = COMBINED.length
+const MEMORY_BLOCKS = OPTIONS.length
 // Change to invalidate stored state
 const VERSION = 2
 
@@ -72,16 +73,26 @@ function predict() {
 	}
 	const prev = matches[matches.length - 1]
 	const output = nn.activate(prev.input)
-	let max = output[0]
-	let dir = 0
-	for (let i = 1; i < DIRECTIONS.length; i++) {
-		if (output[i] > max) {
-			max = output[i]
-			dir = i
-		}
+	const chances = [0, 0, 0]
+	for (let i = 0; i < COMBINED.length; i++) {
+		const val = COMBINED[i]
+		const index = typeof val === 'string' ?
+			OPTIONS.indexOf(val) :
+			option(prev.human, val)
+
+		chances[index] += output[i]
 	}
-	// Try to guess in which direction they'll move from the last one
-	return option(prev.human, DIRECTIONS[dir])
+
+	const sorted = chances.concat().sort().reverse()
+	const best = chances.indexOf(sorted[0])
+	// The output is clear on a single option
+	if (sorted[1] <= 0.5) {
+		return best
+	}
+
+	const snd = chances.indexOf(sorted[1])
+	// Find the option that maximizes the chance of a win/tie with the top 2
+	return option(best === option(snd) ? best : snd, -1)
 }
 
 function createMatch(human, ai, prev) {
@@ -93,23 +104,22 @@ function createMatch(human, ai, prev) {
 
 	const dir = option(human - prev.human)
 	const output = match.output = []
-	for (let i = 0; i < DIRECTIONS.length; i++) {
-		output[i] = i === dir ? 1 : 0
-	}
+	for (let i = 0; i < COMBINED.length; i++) {
+		const val = COMBINED[i]
+		let ok = typeof val === 'string' ?
+			OPTIONS.indexOf(val) === human :
+			DIRECTIONS.indexOf(val) === dir
 
-	const input = match.input = output.concat()
-	for (let i = 0; i < OPTIONS.length; i++) {
-		input.push(i === human ? 1 : 0)
-	}
-
-	input.push(getWinner(human, ai))
-
-	if (input.length !== INPUTS) {
-		throw new Error('input size mismatch')
+		output[i] = ok ? 1 : 0
 	}
 
 	if (output.length !== OUTPUTS) {
 		throw new Error('output size mismatch')
+	}
+
+	match.input = output.concat(getWinner(human, ai))
+	if (match.input.length !== INPUTS) {
+		throw new Error('input size mismatch')
 	}
 	return match
 }
@@ -201,6 +211,8 @@ const chart = new frappe.Chart('#chart', {
 })
 
 function updateChart() {
+	// DONTCOMMMIT
+	// return
 	let ai = 0
 	let human = 0
 	for (const match of matches) {
@@ -251,7 +263,7 @@ function step(queue) {
 	const [human, ai] = queue.shift()
 	record(human, ai)
 	updateChart()
-	setTimeout(step, 100, queue)
+	setTimeout(step, 1, queue)
 }
 
 setState('initializing')
