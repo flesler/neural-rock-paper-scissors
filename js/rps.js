@@ -7,10 +7,10 @@
 
 const TRAIN_OPTIONS = {
 	log: 0,
-	clear: true,
-	error: 0.2,
+	clear: false,
+	error: 0.05,
 	momentum: 0.3,
-	rate: 0.4,
+	rate: 0.5,
 	ratePolicy: neataptic.methods.rate.FIXED(),
 	cost: neataptic.methods.cost.CROSS_ENTROPY
 }
@@ -18,9 +18,9 @@ const TRAIN_OPTIONS = {
 const OPTIONS = ['rock', 'paper', 'scissors']
 const DIRECTIONS = [-1, 0, 1]
 
-const MEMORY_BLOCKS = 4
-const INPUTS = DIRECTIONS.length + 1
+const INPUTS = DIRECTIONS.length + OPTIONS.length + 1
 const OUTPUTS = DIRECTIONS.length
+const MEMORY_BLOCKS = OUTPUTS
 // Change to invalidate stored state
 const VERSION = 2
 
@@ -96,9 +96,15 @@ function createMatch(human, ai, prev) {
 	for (let i = 0; i < DIRECTIONS.length; i++) {
 		output[i] = i === dir ? 1 : 0
 	}
-	match.input = output.concat(getWinner(human, ai))
 
-	if (match.input.length !== INPUTS) {
+	const input = match.input = output.concat()
+	for (let i = 0; i < OPTIONS.length; i++) {
+		input.push(i === human ? 1 : 0)
+	}
+
+	input.push(getWinner(human, ai))
+
+	if (input.length !== INPUTS) {
 		throw new Error('input size mismatch')
 	}
 
