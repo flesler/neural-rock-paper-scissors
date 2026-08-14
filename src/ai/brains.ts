@@ -11,9 +11,14 @@ import {
   coveringThrow,
   getWinner,
   option,
+  payoff,
   rngFrom,
 } from "./core";
-import { createArenaBrain, createGeneticBrain, createIocaineBrain } from "./advanced";
+import {
+  createArenaBrain,
+  createGeneticBrain,
+  createIocaineBrain,
+} from "./advanced";
 import { getNeataptic, lstmTrainOptions } from "./neataptic";
 
 const DIRECTION_INPUTS = DIRECTIONS.length + OPTIONS.length + 1;
@@ -59,7 +64,12 @@ function combinedSample(human: number, ai: number, prev?: Match): Match {
 }
 
 function trainLast(
-  nn: { train: (data: Array<{ input: number[]; output: number[] }>, opts: Record<string, unknown>) => { error: number } },
+  nn: {
+    train: (
+      data: Array<{ input: number[]; output: number[] }>,
+      opts: Record<string, unknown>,
+    ) => { error: number };
+  },
   matches: Match[],
   window: number,
   trainOpts: Record<string, unknown>,
@@ -89,9 +99,7 @@ function chancesFromCombined(output: number[], prevHuman: number) {
   for (let i = 0; i < COMBINED.length; i++) {
     const val = COMBINED[i];
     const index =
-      typeof val === "string"
-        ? OPTIONS.indexOf(val)
-        : option(prevHuman, val);
+      typeof val === "string" ? OPTIONS.indexOf(val) : option(prevHuman, val);
     chances[index] += output[i];
   }
   return chances;
@@ -122,9 +130,12 @@ function createNeuralBrain(
   const neataptic = getNeataptic();
   const inputs = spec.combined ? COMBINED_INPUTS : DIRECTION_INPUTS;
   const outputs = spec.combined ? COMBINED_OUTPUTS : DIRECTION_OUTPUTS;
-  const memory = spec.memory ?? (spec.combined ? OPTIONS.length : DIRECTION_OUTPUTS);
+  const memory =
+    spec.memory ?? (spec.combined ? OPTIONS.length : DIRECTION_OUTPUTS);
   const nn = new neataptic.architect.LSTM(inputs, memory, outputs);
-  const trainOpts = lstmTrainOptions(spec.rate != null ? { rate: spec.rate } : {});
+  const trainOpts = lstmTrainOptions(
+    spec.rate != null ? { rate: spec.rate } : {},
+  );
   const matches: Match[] = [];
   const sample = spec.combined ? combinedSample : directionSample;
 
@@ -297,7 +308,8 @@ export function createAdaptiveBrain(opts?: BrainOpts): Brain {
         : Math.floor(rng() * OPTIONS.length);
       let throw_ = option(humanGuess);
       if (losses >= 3) {
-        throw_ = rng() < 0.5 ? option(throw_, -1) : Math.floor(rng() * OPTIONS.length);
+        throw_ =
+          rng() < 0.5 ? option(throw_, -1) : Math.floor(rng() * OPTIONS.length);
       }
       return throw_;
     },
@@ -319,6 +331,55 @@ export function createAdaptiveBrain(opts?: BrainOpts): Brain {
   };
 }
 
+export function createSpeciesBrain(opts?: BrainOpts): Brain {
+  const rng = rngFrom(opts);
+  const pool: Brain[] = [
+    createIocaineBrain({
+      ...opts,
+      decay: 0.86,
+      biasLock: 0.5,
+      id: "s-io-fast",
+    }),
+    createIocaineBrain({
+      ...opts,
+      decay: 0.94,
+      biasLock: 0.55,
+      id: "s-io-slow",
+    }),
+    createPatternsBrain(opts),
+    createAdaptiveBrain(opts),
+    createNeuralCoverBrain(opts),
+    createRandomBrain(opts),
+  ];
+  const scores = pool.map(() => 0);
+  const proposed = pool.map(() => 0);
+  const matches: Match[] = [];
+  const decay = 0.85;
+
+  return {
+    id: "genetic",
+    decide() {
+      for (let i = 0; i < pool.length; i++) proposed[i] = pool[i].decide();
+      if (matches.length < 2) {
+        return proposed[Math.floor(rng() * pool.length)];
+      }
+      let best = 0;
+      for (let i = 1; i < pool.length; i++) {
+        if (scores[i] > scores[best]) best = i;
+      }
+      return proposed[best];
+    },
+    learn(human, ai) {
+      for (let i = 0; i < pool.length; i++) {
+        scores[i] = scores[i] * decay + payoff(human, proposed[i]);
+        pool[i].learn(human, ai);
+      }
+      matches.push({ human, ai });
+    },
+    getMatches: () => matches,
+  };
+}
+
 const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   random: createRandomBrain,
   neural: createNeuralBrainClassic,
@@ -327,9 +388,9 @@ const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   "neural-window": createNeuralWindowBrain,
   patterns: createPatternsBrain,
   adaptive: createAdaptiveBrain,
-  iocaine: (opts) =>
-    createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
-  genetic: createGeneticBrain,
+  iocaine: (opts) => createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
+  genetic: createSpeciesBrain,
+  "genetic-mix": createGeneticBrain,
   arena: createArenaBrain,
 };
 

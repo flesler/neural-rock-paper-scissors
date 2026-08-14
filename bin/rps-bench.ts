@@ -1,6 +1,12 @@
 #!/usr/bin/env npx tsx
 import "../src/ai/node";
-import { BRAIN_IDS, createBrain, runSeries } from "../src/ai";
+import {
+  BRAIN_IDS,
+  SESSION_ROUNDS,
+  WARMUP_BUCKETS,
+  createBrain,
+  runSeries,
+} from "../src/ai";
 import { FIXTURE_IDS, createFixture } from "../src/fixtures";
 
 type Args = {
@@ -13,7 +19,7 @@ type Args = {
 
 function parseArgs(argv: string[]): Args {
   const args: Args = {
-    rounds: 400,
+    rounds: 80,
     seed: 1,
     brains: BRAIN_IDS.slice(),
     fixtures: FIXTURE_IDS.slice(),
@@ -68,56 +74,133 @@ function pct(n: number) {
   return (100 * n).toFixed(1);
 }
 
+function printTable(
+  title: string,
+  fixtures: string[],
+  brains: string[],
+  cell: (fixture: string, brain: string) => string,
+  footer?: Array<[string, (brain: string) => string]>,
+) {
+  const nameWidth = Math.max(
+    8,
+    ...["pattern", ...fixtures].map((n) => n.length),
+  );
+  const colWidth = Math.max(12, ...brains.map((n) => n.length + 1));
+  console.log(title);
+  let header = pad("pattern", nameWidth);
+  for (const id of brains) header += "  " + pad(id, colWidth);
+  console.log(header);
+  for (const fixtureId of fixtures) {
+    let row = pad(fixtureId, nameWidth);
+    for (const brainId of brains) row += "  " + cell(fixtureId, brainId);
+    console.log(row);
+  }
+  if (footer) {
+    for (const [label, fn] of footer) {
+      let row = pad(label, nameWidth);
+      for (const brainId of brains) row += "  " + fn(brainId);
+      console.log(row);
+    }
+  }
+  console.log("");
+}
+
 function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
     console.log(
-      "Usage: npm run bench -- [--rounds 400] [--seed 1] [--brains neural,patterns] [--fixtures cycle,always-rock]",
+      "Usage: npm run bench -- [--rounds 80] [--seed 1] [--brains iocaine,genetic] [--fixtures cycle,random]",
     );
     process.exit(0);
   }
 
-  const nameWidth = Math.max(
-    8,
-    ...["pattern", ...args.fixtures].map((n) => n.length),
-  );
-  const colWidth = Math.max(12, ...args.brains.map((n) => n.length + 1));
-
-  console.log(`AI win %  (${args.rounds} rounds, seed ${args.seed})\n`);
-  let header = pad("pattern", nameWidth);
-  for (const id of args.brains) header += "  " + pad(id, colWidth);
-  console.log(header);
-
-  const totals: Record<string, { win: number; score: number; n: number }> = {};
-  for (const id of args.brains) totals[id] = { win: 0, score: 0, n: 0 };
+  type Cell = ReturnType<typeof runSeries>;
+  const results: Record<string, Record<string, Cell>> = {};
+  const totals: Record<
+    string,
+    { win: number; score: number; session: number; lock: number[]; n: number }
+  > = {};
+  for (const id of args.brains) {
+    totals[id] = { win: 0, score: 0, session: 0, lock: [], n: 0 };
+  }
 
   for (const fixtureId of args.fixtures) {
-    let row = pad(fixtureId, nameWidth);
+    results[fixtureId] = {};
     for (const brainId of args.brains) {
       const rng = mulberry32(args.seed + hash(fixtureId + ":" + brainId));
       const brain = createBrain(brainId, { rng });
       const opponent = createFixture(fixtureId, { rng });
       const result = runSeries(brain, opponent, args.rounds);
-      row += "  " + pad(pct(result.aiWinRate), colWidth);
+      results[fixtureId][brainId] = result;
       totals[brainId].win += result.aiWinRate;
       totals[brainId].score += result.score;
+      totals[brainId].session += result.session.aiWinRate;
+      if (result.lockIn != null) totals[brainId].lock.push(result.lockIn);
       totals[brainId].n++;
     }
-    console.log(row);
   }
 
-  let mean = pad("MEAN", nameWidth);
-  for (const id of args.brains) {
-    mean += "  " + pad(pct(totals[id].win / totals[id].n), colWidth);
-  }
-  console.log(mean);
+  const colWidth = Math.max(12, ...args.brains.map((n) => n.length + 1));
+  const cell = (f: string, b: string, pick: (r: Cell) => number) =>
+    pad(pct(pick(results[f][b])), colWidth);
 
-  let score = pad("SCORE*", nameWidth);
-  for (const id of args.brains) {
-    score += "  " + pad(pct(totals[id].score / totals[id].n), colWidth);
+  printTable(
+    `SESSION first ${SESSION_ROUNDS}  (AI win %, ${args.rounds} round games, seed ${args.seed})\n`,
+    args.fixtures,
+    args.brains,
+    (f, b) => cell(f, b, (r) => r.session.aiWinRate),
+    [["MEAN", (b) => pad(pct(totals[b].session / totals[b].n), colWidth)]],
+  );
+
+  for (const bucket of WARMUP_BUCKETS) {
+    const means: Record<string, number> = {};
+    for (const b of args.brains) means[b] = 0;
+    let n = 0;
+    for (const f of args.fixtures) {
+      for (const b of args.brains) {
+        const row = results[f][b].buckets.find((x) => x.id === bucket.id);
+        if (row && row.rounds) {
+          means[b] += row.aiWinRate;
+        }
+      }
+      n++;
+    }
+    let line = pad(`bucket ${bucket.id}`, 16);
+    for (const b of args.brains) {
+      line += "  " + pad(pct(means[b] / n), colWidth);
+    }
+    if (bucket.id === WARMUP_BUCKETS[0].id) {
+      console.log("WARMUP buckets (mean AI win % across fixtures)\n");
+      let header = pad("window", 16);
+      for (const id of args.brains) header += "  " + pad(id, colWidth);
+      console.log(header);
+    }
+    console.log(line);
   }
-  console.log(score);
-  console.log("\n* SCORE = (wins + 0.5 * ties) / rounds");
+
+  let lockLine = pad("lock-in r", 16);
+  for (const b of args.brains) {
+    const xs = totals[b].lock;
+    const avg = xs.length ? xs.reduce((a, c) => a + c, 0) / xs.length : NaN;
+    lockLine +=
+      "  " + pad(Number.isFinite(avg) ? avg.toFixed(1) : "—", colWidth);
+  }
+  console.log(lockLine);
+  console.log(
+    "\nlock-in = first round where the last 8 games are ≥60% AI wins (mean over fixtures that lock)\n",
+  );
+
+  printTable(
+    `FULL game AI win %\n`,
+    args.fixtures,
+    args.brains,
+    (f, b) => cell(f, b, (r) => r.aiWinRate),
+    [
+      ["MEAN", (b) => pad(pct(totals[b].win / totals[b].n), colWidth)],
+      ["SCORE*", (b) => pad(pct(totals[b].score / totals[b].n), colWidth)],
+    ],
+  );
+  console.log("* SCORE = (wins + 0.5 * ties) / rounds");
 }
 
 main();

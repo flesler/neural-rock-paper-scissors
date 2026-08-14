@@ -13,5 +13,7 @@ export {
   getWinner,
   option,
   runSeries,
+  SESSION_ROUNDS,
+  WARMUP_BUCKETS,
 } from "./core";
 export { BRAIN_IDS, createBrain } from "./brains";

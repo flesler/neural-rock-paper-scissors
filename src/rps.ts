@@ -1,23 +1,17 @@
-import {
-  OPTIONS,
-  createBrain,
-  getWinner,
-  type Brain,
-  type Match,
-} from "./ai";
+import { OPTIONS, createBrain, getWinner, type Brain, type Match } from "./ai";
 
 const VERSION = 2;
 const STORAGE = "brain";
 const BRAIN_STORAGE = "brainId";
-const DEFAULT_BRAIN = "iocaine";
+const DEFAULT_BRAIN = "genetic";
 const MAX_DATAPOINTS = 15;
 const HUMAN = 0;
 const AI = 1;
 
 const BRAIN_CHOICES = [
-  "iocaine",
-  "arena",
   "genetic",
+  "iocaine",
+  "genetic-mix",
   "neural",
   "neural-cover",
   "neural-6",
@@ -97,7 +91,9 @@ if (resetButton) {
   };
 }
 
-const brainSelect = document.getElementById("brain") as HTMLSelectElement | null;
+const brainSelect = document.getElementById(
+  "brain",
+) as HTMLSelectElement | null;
 if (brainSelect) {
   for (const id of BRAIN_CHOICES) {
     const opt = document.createElement("option");

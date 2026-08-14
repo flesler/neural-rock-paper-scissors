@@ -74,7 +74,54 @@ export type SeriesResult = {
   rounds: number;
   aiWinRate: number;
   score: number;
+  payoffByRound: number[];
+  session: { rounds: number; aiWinRate: number; score: number };
+  buckets: Array<{
+    id: string;
+    rounds: number;
+    aiWinRate: number;
+    score: number;
+  }>;
+  lockIn: number | null;
 };
+
+export const SESSION_ROUNDS = 20;
+
+export const WARMUP_BUCKETS = [
+  { id: "1-5", from: 0, to: 5 },
+  { id: "6-12", from: 5, to: 12 },
+  { id: "13-20", from: 12, to: 20 },
+  { id: "21-40", from: 20, to: 40 },
+  { id: "41+", from: 40, to: Number.POSITIVE_INFINITY },
+] as const;
+
+function summarize(payoffs: number[]) {
+  let wins = 0;
+  let ties = 0;
+  for (const p of payoffs) {
+    if (p > 0) wins++;
+    else if (p === 0) ties++;
+  }
+  const rounds = payoffs.length;
+  return {
+    rounds,
+    aiWinRate: rounds ? wins / rounds : 0,
+    score: rounds ? (wins + 0.5 * ties) / rounds : 0,
+  };
+}
+
+function lockInRound(payoffs: number[], window = 8, target = 0.6) {
+  if (payoffs.length < window) return null;
+  let wins = 0;
+  for (let i = 0; i < window; i++) if (payoffs[i] > 0) wins++;
+  if (wins / window >= target) return window;
+  for (let i = window; i < payoffs.length; i++) {
+    if (payoffs[i - window] > 0) wins--;
+    if (payoffs[i] > 0) wins++;
+    if (wins / window >= target) return i + 1;
+  }
+  return null;
+}
 
 export type Opponent = {
   id?: string;
@@ -89,6 +136,7 @@ export function runSeries(
   rounds: number,
 ): SeriesResult {
   opponent.reset?.();
+  const payoffByRound: number[] = [];
   let aiWins = 0;
   let humanWins = 0;
   let ties = 0;
@@ -99,9 +147,16 @@ export function runSeries(
     if (winner === AI) aiWins++;
     else if (winner === HUMAN) humanWins++;
     else ties++;
+    payoffByRound.push(payoff(human, ai));
     brain.learn(human, ai);
     opponent.learn?.(human, ai);
   }
+  const buckets = WARMUP_BUCKETS.map((b) => ({
+    id: b.id,
+    ...summarize(
+      payoffByRound.slice(b.from, Math.min(b.to, payoffByRound.length)),
+    ),
+  }));
   return {
     aiWins,
     humanWins,
@@ -109,5 +164,9 @@ export function runSeries(
     rounds,
     aiWinRate: aiWins / rounds,
     score: (aiWins + 0.5 * ties) / rounds,
+    payoffByRound,
+    session: summarize(payoffByRound.slice(0, SESSION_ROUNDS)),
+    buckets,
+    lockIn: lockInRound(payoffByRound),
   };
 }
