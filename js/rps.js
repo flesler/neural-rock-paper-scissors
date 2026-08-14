@@ -190,6 +190,13 @@
 
   // Chart
 
+  const blankLabels = Array.from({ length: MAX_DATAPOINTS }, function () {
+    return " ";
+  });
+  const blankValues = Array.from({ length: MAX_DATAPOINTS }, function () {
+    return 0;
+  });
+
   const chart = new frappe.Chart("#chart", {
     type: "bar",
     // Frappe spends ~130px on legend/padding; size the rest from column width
@@ -200,17 +207,21 @@
       const chrome = 130;
       const total = chrome + Math.round(width * 0.4);
       return Math.round(
-        Math.min(Math.max(total, 200), Math.min(320, window.innerHeight * 0.36))
+        Math.min(
+          Math.max(total, 200),
+          Math.min(320, window.innerHeight * 0.36),
+        ),
       );
     })(),
     data: {
-      labels: [],
+      labels: blankLabels,
       datasets: [
-        { name: "AI", values: [] },
-        { name: "Human", values: [] },
-        { name: "Tie", values: [] },
+        { name: "AI", values: blankValues.slice() },
+        { name: "Human", values: blankValues.slice() },
+        { name: "Tie", values: blankValues.slice() },
       ],
-      yMarkers: [{ label: "", value: 0, options: { labelPos: "right" } }],
+      // Marker 1 gives a non-zero y-scale so empty bars don't produce NaN/Infinity SVG attrs
+      yMarkers: [{ label: "", value: 1, options: { labelPos: "right" } }],
     },
     barOptions: {
       spaceRatio: 0.2,
@@ -235,9 +246,10 @@
     if (chart.data.labels.length >= MAX_DATAPOINTS) {
       chart.removeDataPoint(0);
     }
-    // The marker at human (from 0) is more indicative than avg(ai, human)
-    chart.data.yMarkers[0].value = human;
-    chart.addDataPoint(total || "", [ai, human, total - (ai + human)]);
+    // The marker at human (from 0) is more indicative than avg(ai, human).
+    // Keep a 1-unit scale while there are no matches so Frappe can layout bars.
+    chart.data.yMarkers[0].value = total ? human : 1;
+    chart.addDataPoint(String(total), [ai, human, total - (ai + human)]);
   }
 
   function init() {
@@ -261,9 +273,6 @@
       }
     }
 
-    for (let i = queue.length; i < MAX_DATAPOINTS; i++) {
-      updateChart();
-    }
     step(queue);
   }
 
