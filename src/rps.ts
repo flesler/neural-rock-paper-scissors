@@ -9,12 +9,15 @@ import {
 const VERSION = 2;
 const STORAGE = "brain";
 const BRAIN_STORAGE = "brainId";
-const DEFAULT_BRAIN = "neural";
+const DEFAULT_BRAIN = "iocaine";
 const MAX_DATAPOINTS = 15;
 const HUMAN = 0;
 const AI = 1;
 
 const BRAIN_CHOICES = [
+  "iocaine",
+  "arena",
+  "genetic",
   "neural",
   "neural-cover",
   "neural-6",

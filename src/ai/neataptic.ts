@@ -40,6 +40,7 @@ export function lstmTrainOptions(overrides: Record<string, unknown> = {}) {
     log: 0,
     clear: false,
     error: 0.05,
+    iterations: 8,
     momentum: 0.3,
     rate: 0.5,
     ratePolicy: neataptic.methods.rate.FIXED(),

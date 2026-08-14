@@ -13,6 +13,7 @@ import {
   option,
   rngFrom,
 } from "./core";
+import { createArenaBrain, createGeneticBrain, createIocaineBrain } from "./advanced";
 import { getNeataptic, lstmTrainOptions } from "./neataptic";
 
 const DIRECTION_INPUTS = DIRECTIONS.length + OPTIONS.length + 1;
@@ -190,7 +191,7 @@ export function createNeural6Brain(opts?: BrainOpts) {
 export function createNeuralWindowBrain(opts?: BrainOpts) {
   return createNeuralBrain("neural-window", opts, {
     cover: true,
-    window: 12,
+    window: 8,
     combined: false,
     rate: 0.25,
   });
@@ -326,6 +327,10 @@ const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   "neural-window": createNeuralWindowBrain,
   patterns: createPatternsBrain,
   adaptive: createAdaptiveBrain,
+  iocaine: (opts) =>
+    createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
+  genetic: createGeneticBrain,
+  arena: createArenaBrain,
 };
 
 export const BRAIN_IDS = Object.keys(FACTORIES);

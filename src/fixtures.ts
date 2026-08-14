@@ -48,6 +48,15 @@ const FACTORIES: Record<string, FixtureFactory> = {
     ),
   "switch-5": () =>
     createOpponent((history) => Math.floor(history.length / 5) % 3),
+  "switch-8": () =>
+    createOpponent((history) => Math.floor(history.length / 8) % 3),
+  "anti-repeat": () =>
+    createOpponent((history) => {
+      if (history.length < 2) return 0;
+      const a = last(history).ai;
+      const b = history[history.length - 2].ai;
+      return a === b ? option(a) : option(a, 0);
+    }),
   "biased-rock": (opts) => {
     const rng = opts?.rng ?? Math.random;
     return createOpponent(() => {
