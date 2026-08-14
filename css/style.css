@@ -40,6 +40,13 @@ body {
   visibility: hidden;
 }
 
+#brain {
+  position: absolute;
+  left: 0.8vh;
+  top: 0.8vh;
+  z-index: 1000;
+}
+
 #reset {
   position: absolute;
   right: clamp(76px, 11vw, 116px);

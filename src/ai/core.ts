@@ -1,0 +1,113 @@
+export const OPTIONS = ["rock", "paper", "scissors"] as const;
+export const DIRECTIONS = [-1, 0, 1] as const;
+
+export const HUMAN = 0;
+export const AI = 1;
+export const TIE = 0.5;
+
+export type Match = {
+  human: number;
+  ai: number;
+  input?: number[];
+  output?: number[];
+};
+
+export type Brain = {
+  id: string;
+  decide: () => number;
+  learn: (human: number, ai: number) => void;
+  getMatches: () => Match[];
+};
+
+export type BrainOpts = {
+  rng?: () => number;
+};
+
+export function option(choice: number, delta = +1) {
+  return (choice + delta + OPTIONS.length) % OPTIONS.length;
+}
+
+export function getWinner(human: number, ai: number) {
+  switch (ai) {
+    case human:
+      return TIE;
+    case option(human):
+      return AI;
+    default:
+      return HUMAN;
+  }
+}
+
+export function argmax(values: number[]) {
+  let max = values[0];
+  let idx = 0;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] > max) {
+      max = values[i];
+      idx = i;
+    }
+  }
+  return idx;
+}
+
+export function rngFrom(opts?: BrainOpts) {
+  return opts?.rng ?? Math.random;
+}
+
+/** Throw that beats `a` and ties `b` when they differ. */
+export function coveringThrow(a: number, b: number) {
+  if (a === b) return option(a);
+  return a === option(b) ? a : b;
+}
+
+export function payoff(human: number, ai: number) {
+  const winner = getWinner(human, ai);
+  if (winner === AI) return 1;
+  if (winner === HUMAN) return -1;
+  return 0;
+}
+
+export type SeriesResult = {
+  aiWins: number;
+  humanWins: number;
+  ties: number;
+  rounds: number;
+  aiWinRate: number;
+  score: number;
+};
+
+export type Opponent = {
+  id?: string;
+  reset?: () => void;
+  decide: () => number;
+  learn?: (human: number, ai: number) => void;
+};
+
+export function runSeries(
+  brain: Brain,
+  opponent: Opponent,
+  rounds: number,
+): SeriesResult {
+  opponent.reset?.();
+  let aiWins = 0;
+  let humanWins = 0;
+  let ties = 0;
+  for (let i = 0; i < rounds; i++) {
+    const ai = brain.decide();
+    const human = opponent.decide();
+    const winner = getWinner(human, ai);
+    if (winner === AI) aiWins++;
+    else if (winner === HUMAN) humanWins++;
+    else ties++;
+    brain.learn(human, ai);
+    opponent.learn?.(human, ai);
+  }
+  return {
+    aiWins,
+    humanWins,
+    ties,
+    rounds,
+    aiWinRate: aiWins / rounds,
+    score: (aiWins + 0.5 * ties) / rounds,
+  };
+}

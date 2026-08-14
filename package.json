@@ -7,12 +7,15 @@
     "build": "tsup",
     "dev": "concurrently -k \"tsup --watch\" \"serve .\"",
     "typecheck": "tsc --noEmit",
-    "start": "npm run build && serve ."
+    "start": "npm run build && serve .",
+    "bench": "tsx bin/rps-bench.ts",
+    "list": "tsx bin/rps-list.ts"
   },
   "dependencies": {
     "neataptic": "^1.4.7"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "concurrently": "^9.2.1",
     "serve": "^14.2.1",
     "tsup": "^8.5.0",
