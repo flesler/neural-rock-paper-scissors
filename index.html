@@ -22,44 +22,50 @@
       class="github-ribbon" alt="Fork me on GitHub"></a>
   <h1>Web-based Rock-Paper-Scissors vs a Neural Network</h1>
   <main>
-    <div id="human-choices"></div>
-    <aside class="ai-panel">
-      <div class="ai-toolbar">
-        <label class="ai-strategy">
-          <span>Strategy</span>
-          <select id="brain" aria-label="AI strategy"></select>
-        </label>
-        <button id="reset" type="button" class="reset-btn" title="Reset" aria-label="Reset">↻</button>
-      </div>
-      <div class="ai-scoreboard">
-        <div class="score-line">
-          <span class="score-stat">
-            <span class="score-label">AI</span>
-            <span class="score-swatch ai" aria-hidden="true"></span>
-            <strong id="ai-score">0</strong>
-          </span>
-          <span class="score-stat">
-            <span class="score-label">You</span>
-            <span class="score-swatch human" aria-hidden="true"></span>
-            <strong id="human-score">0</strong>
-          </span>
-          <span class="score-stat">
-            <span class="score-label">Ties</span>
-            <span class="score-swatch tie" aria-hidden="true"></span>
-            <strong id="tie-score">0</strong>
-          </span>
-          <span class="score-stat score-rate">
-            <span class="score-label">AI win rate</span>
-            <strong id="ai-rate" class="rate-neutral">—</strong>
-          </span>
+    <div class="game-row game-row--top">
+      <div id="human-choices" class="game-cell"></div>
+      <aside class="ai-panel game-cell">
+        <div class="ai-toolbar">
+          <label class="ai-strategy">
+            <span>Strategy</span>
+            <select id="brain" aria-label="AI strategy"></select>
+          </label>
+          <button id="reset" type="button" class="reset-btn" title="Reset" aria-label="Reset">↻</button>
         </div>
-        <div id="score-history" class="score-history" aria-label="Round history"></div>
+        <div class="ai-scoreboard">
+          <div class="score-line">
+            <span class="score-stat">
+              <span class="score-label">AI</span>
+              <span class="score-swatch ai" aria-hidden="true"></span>
+              <strong id="ai-score">0</strong>
+            </span>
+            <span class="score-stat">
+              <span class="score-label">You</span>
+              <span class="score-swatch human" aria-hidden="true"></span>
+              <strong id="human-score">0</strong>
+            </span>
+            <span class="score-stat">
+              <span class="score-label">Ties</span>
+              <span class="score-swatch tie" aria-hidden="true"></span>
+              <strong id="tie-score">0</strong>
+            </span>
+            <span class="score-stat score-rate">
+              <span class="score-label">AI win rate</span>
+              <strong id="ai-rate" class="rate-neutral">—</strong>
+            </span>
+          </div>
+          <div id="score-history" class="score-history" aria-label="Round history"></div>
+        </div>
+      </aside>
+    </div>
+    <div class="game-row game-row--hands">
+      <div class="game-cell game-cell--hand game-cell--human">
+        <img id="human" class="choice" alt="">
       </div>
-    </aside>
-    <img id="human" class="choice" alt="">
-    <img class="busy" src="img/thinking.gif" alt="">
-    <div class="ai-hand-wrap">
-      <img id="ai" class="choice" alt="">
+      <div class="game-cell game-cell--hand ai-hand-wrap">
+        <img id="ai" class="choice choice--ai" alt="">
+        <img class="busy" src="img/thinking.gif" alt="">
+      </div>
     </div>
   </main>
 

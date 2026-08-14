@@ -1,14 +1,22 @@
 html,
 body {
+  width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 }
 
+:root {
+  --hand-w: 617;
+  --hand-h: 438;
+  --hand-ideal-height: calc(50vw * var(--hand-h) / var(--hand-w));
+}
+
 body {
   display: flex;
   flex-direction: column;
+  min-height: 100dvh;
   height: 100dvh;
   overflow-y: auto;
   font-family: system-ui, sans-serif;
@@ -51,50 +59,96 @@ h1 {
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
-  margin: 0.8vh 4.5rem 0.6vh;
+  margin: 0.8vh 0.75rem 1.5vh;
+  padding-right: clamp(2.5rem, 14vw, 4rem);
   font-size: clamp(1rem, 3.2vh, 1.85rem);
   line-height: 1.2;
   text-align: center;
 }
 
 main {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(0, 1fr) auto minmax(72px, 40vh);
-  grid-template-areas:
-    ". ."
-    "choices status"
-    "human ai";
-  column-gap: clamp(1rem, 3vw, 2.5rem);
-  row-gap: 1.5vh;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
-  padding: 0 0 1.2vh;
+  max-width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
-main > * {
+.game-row {
+  display: contents;
+}
+
+.game-cell {
+  min-width: 0;
   min-height: 0;
+  box-sizing: border-box;
 }
 
 #human-choices {
-  grid-area: choices;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.ai-panel {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.game-cell--human {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.ai-hand-wrap {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.game-cell--hand {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+}
+
+.choice {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
+  object-fit: contain;
+  object-position: left bottom;
+}
+
+.ai-hand-wrap .choice--ai {
+  left: auto;
+  right: 0;
+  object-position: right bottom;
+  transform: scaleX(-1);
+}
+
+#human-choices {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  justify-self: center;
-  width: 47vw;
-  gap: 2vw;
-  margin-right: 1.5vw;
+  gap: 0.35rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.25rem;
+  box-sizing: border-box;
 }
 
 #human-choices img {
   cursor: pointer;
-  flex: 1 1 0;
-  width: 0;
+  flex: 0 0 auto;
+  width: min(36vw, 9rem);
   height: auto;
   aspect-ratio: 617 / 438;
   object-fit: contain;
@@ -121,15 +175,15 @@ main > * {
 }
 
 .ai-panel {
-  grid-area: status;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
   width: 100%;
+  min-width: 0;
   height: auto;
+  align-self: start;
   padding: 0.55rem 0.65rem 0.45rem;
-  padding-right: max(0.65rem, calc(clamp(72px, 10vw, 110px) * 0.35));
   background: #fafafa;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -304,49 +358,15 @@ main > * {
 }
 
 .busy {
-  grid-area: ai;
-  justify-self: center;
-  align-self: center;
-  max-height: 25%;
-  max-width: 40%;
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform: translate(-50%, 50%);
+  max-height: 40%;
+  max-width: 60%;
   object-fit: contain;
   pointer-events: none;
   z-index: 1;
-}
-
-.choice {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 72px;
-  object-fit: contain;
-  object-position: left bottom;
-}
-
-#human {
-  grid-area: human;
-  justify-self: start;
-}
-
-.ai-hand-wrap {
-  grid-area: ai;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  width: 100%;
-  height: 100%;
-  min-height: 72px;
-  overflow: visible;
-}
-
-#ai {
-  display: block;
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: right bottom;
-  transform: scaleX(-1);
 }
 
 @keyframes tilt {
@@ -366,26 +386,62 @@ main > * {
   animation-timing-function: ease-in-out;
 }
 
-@media (orientation: portrait) {
+@media (max-aspect-ratio: 1/1) {
+  body {
+    overflow-y: hidden;
+  }
+
+  h1 {
+    margin: 0.6vh 0 1.2vh;
+    padding: 0 clamp(2.25rem, 13vw, 3.5rem) 0 0.35rem;
+  }
+
   #human-choices {
     flex-direction: column;
-    align-items: center;
-    width: auto;
-    max-width: 46vw;
     gap: 0.35rem;
-    margin-right: 0;
+    padding: 0.25rem;
   }
 
   #human-choices img {
     flex: 0 0 auto;
-    width: min(34vw, 9rem);
+    width: min(36vw, 9rem);
+    max-width: none;
+  }
+
+  .ai-panel {
+    padding: 0.5rem 0.4rem 0.4rem 0.5rem;
+    border-radius: 8px 0 0 8px;
+    border-right: none;
   }
 }
 
-@media (orientation: landscape) and (max-height: 720px) {
+@media (min-aspect-ratio: 10001/10000) {
+  h1 {
+    margin: 0.8vh 4.5rem 1.2vh;
+    padding-right: clamp(2.5rem, 14vw, 4rem);
+  }
+
+  #human-choices {
+    flex-direction: row;
+    gap: 2vw;
+    padding: 0 1.5vw 0 0;
+  }
+
+  #human-choices img {
+    flex: 1 1 0;
+    width: 0;
+    max-width: none;
+  }
+
+  .ai-panel {
+    padding-right: max(0.65rem, calc(clamp(72px, 10vw, 110px) * 0.35));
+  }
+}
+
+@media (min-aspect-ratio: 10001/10000) and (max-height: 720px) {
   h1 {
     font-size: clamp(0.9rem, 2.8vh, 1.35rem);
-    margin: 0.5vh 4rem 0.4vh;
+    margin: 0.5vh 4rem 1.4vh;
   }
 
   .ai-toolbar {

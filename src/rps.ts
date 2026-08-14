@@ -70,8 +70,13 @@ function endGame(human: number, ai: number) {
   setTimeout(startGame, 3000);
 }
 
+const GAME_STATES = ["initializing", "ready", "thinking", "ended"];
+
 function setState(state: string) {
-  document.body.className = state;
+  for (const name of GAME_STATES) {
+    document.body.classList.remove(name);
+  }
+  document.body.classList.add(state);
 }
 
 function save() {
@@ -154,16 +159,17 @@ function syncResetButton() {
 }
 
 function updateScore() {
-  const { aiWins, humanWins, ties, total } = scoreTotals();
+  const { aiWins, humanWins, ties } = scoreTotals();
   if (aiScoreEl) aiScoreEl.textContent = String(aiWins);
   if (humanScoreEl) humanScoreEl.textContent = String(humanWins);
   if (tieScoreEl) tieScoreEl.textContent = String(ties);
   if (aiRateEl) {
-    if (!total) {
+    const decided = aiWins + humanWins;
+    if (!decided) {
       aiRateEl.textContent = "—";
       aiRateEl.className = "rate-neutral";
     } else {
-      const pct = Math.round((100 * aiWins) / total);
+      const pct = Math.round((100 * aiWins) / decided);
       aiRateEl.textContent = pct + "%";
       aiRateEl.className =
         pct > 50 ? "rate-win" : pct < 50 ? "rate-lose" : "rate-even";
