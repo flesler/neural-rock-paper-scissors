@@ -181,7 +181,7 @@ export function createRandomBrain(opts?: BrainOpts): Brain {
 }
 
 export function createNeuralBrainClassic(opts?: BrainOpts) {
-  return createNeuralBrain("neural", opts, {
+  return createNeuralBrain("feedforward", opts, {
     cover: false,
     window: 1,
     combined: false,
@@ -205,7 +205,7 @@ export function createNeural6Brain(opts?: BrainOpts) {
 }
 
 export function createNeuralWindowBrain(opts?: BrainOpts) {
-  return createNeuralBrain("neural-window", opts, {
+  return createNeuralBrain("windowed-net", opts, {
     cover: true,
     window: 8,
     combined: false,
@@ -436,16 +436,16 @@ export function createSpeciesBrain(
 
 const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   random: createRandomBrain,
-  neural: createNeuralBrainClassic,
+  feedforward: createNeuralBrainClassic,
   "neural-cover": createNeuralCoverBrain,
   "neural-6": createNeural6Brain,
-  "neural-window": createNeuralWindowBrain,
+  "windowed-net": createNeuralWindowBrain,
   "neural-combo": createNeuralComboBrain,
   "neural-open": createNeuralOpenBrain,
   patterns: createPatternsBrain,
   adaptive: createAdaptiveBrain,
   iocaine: (opts) => createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
-  contest: createContestBrain,
+  "iocaine-plus": createContestBrain,
   "best-of": createSpeciesBrain,
   "best-of-nn": (opts) =>
     createSpeciesBrain({ ...opts, pool: "nn", id: "best-of-nn" }),
@@ -478,11 +478,11 @@ export const BRAIN_WARMUP: Record<string, number> = {
   "best-of-decay": 10,
   "best-of-warm": 8,
   iocaine: 10,
-  contest: 9,
-  neural: 12,
+  "iocaine-plus": 9,
+  feedforward: 12,
   "neural-cover": 12,
   "neural-6": 12,
-  "neural-window": 10,
+  "windowed-net": 10,
   "neural-combo": 10,
   "neural-open": 8,
   patterns: 14,
@@ -496,11 +496,8 @@ export function warmupRounds(id: string) {
   return BRAIN_WARMUP[id] ?? 10;
 }
 
-const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
-
 export function createBrain(id: string, opts?: BrainOpts): Brain {
-  const resolved = BRAIN_ALIASES[id] ?? id;
-  const factory = FACTORIES[resolved];
+  const factory = FACTORIES[id];
   if (!factory) throw new Error("unknown brain: " + id);
   return factory(opts);
 }

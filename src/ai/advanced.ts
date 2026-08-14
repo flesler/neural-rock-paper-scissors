@@ -424,7 +424,7 @@ export function createContestBrain(
   }
 
   return {
-    id: opts?.id ?? "contest",
+    id: opts?.id ?? "iocaine-plus",
     decide: bestMove,
     learn(human, ai) {
       for (let i = 0; i < experts.length; i++) {

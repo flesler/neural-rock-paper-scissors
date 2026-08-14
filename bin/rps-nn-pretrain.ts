@@ -3,7 +3,7 @@
  * Diagnostic: is NN weak because of cold-start, or because it can't
  * retune when the opponent changes?
  *
- * Pretrain neural-window on stationary fixtures, then play frozen vs
+ * Pretrain windowed-net on stationary fixtures, then play frozen vs
  * keep-learning on train / unseen-stationary / switching holdouts.
  */
 import "../src/ai/node";
@@ -225,13 +225,13 @@ function evalSet(
 }
 
 function main() {
-  console.log("Pretraining neural-window on:");
+  console.log("Pretraining windowed-net on:");
   console.log(" ", PRETRAIN.join(", "));
   const pretrained = pretrain();
   console.log("done.\n");
 
   const scratch = (id: string, opts?: BrainOpts) =>
-    createBrain("neural-window", opts);
+    createBrain("windowed-net", opts);
   const frozen = (_id: string, opts?: BrainOpts) =>
     createWindowBrain("nn-frozen", cloneNet(pretrained), {
       ...opts,
@@ -254,7 +254,7 @@ function main() {
 
   for (const [name, fixtures] of groups) {
     console.log(`=== ${name} ===`);
-    evalSet("scratch neural-window", fixtures, scratch);
+    evalSet("scratch windowed-net", fixtures, scratch);
     evalSet("pretrained FROZEN", fixtures, frozen);
     evalSet("pretrained + learn", fixtures, live);
     evalSet("iocaine", fixtures, iocaine);

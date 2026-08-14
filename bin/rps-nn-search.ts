@@ -373,8 +373,8 @@ function main() {
   const baselines = [
     "best-of",
     "iocaine",
-    "neural",
-    "neural-window",
+    "feedforward",
+    "windowed-net",
     "patterns",
     "adaptive",
   ];

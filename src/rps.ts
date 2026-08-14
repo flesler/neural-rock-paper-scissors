@@ -13,36 +13,30 @@ const VERSION = 2;
 const MATCH_STORAGE = "match";
 const BRAIN_STORAGE = "brainId";
 const OPEN_STORAGE = "openThrow";
-const DEFAULT_BRAIN = "contest";
-const HUMAN = 0;
-const AI = 1;
-const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
-
-const BRAIN_CHOICES = [
-  "contest",
-  "best-of",
-  "iocaine",
-  "neural",
-  "neural-window",
-  "patterns",
-  "adaptive",
-  "random",
-];
-
-const BRAIN_LABELS: Record<string, string> = {
-  contest: "Iocaine+",
+const BRAIN_LABELS = {
+  "iocaine-plus": "Iocaine+",
   "best-of": "Best of",
   iocaine: "Iocaine",
-  neural: "Neural",
-  "neural-window": "Neural window",
+  feedforward: "Feedforward",
+  "windowed-net": "Windowed net",
   patterns: "Patterns",
   adaptive: "Adaptive",
   random: "Random",
-};
+} as const;
 
-function selectedBrainId() {
-  const stored = localStorage.getItem(BRAIN_STORAGE) || DEFAULT_BRAIN;
-  return BRAIN_ALIASES[stored] || stored;
+type BrainId = keyof typeof BRAIN_LABELS;
+const BRAIN_IDS = Object.keys(BRAIN_LABELS) as BrainId[];
+const DEFAULT_BRAIN: BrainId = "iocaine-plus";
+const HUMAN = 0;
+const AI = 1;
+
+function isBrainId(id: string): id is BrainId {
+  return Object.prototype.hasOwnProperty.call(BRAIN_LABELS, id);
+}
+
+function selectedBrainId(): BrainId {
+  const stored = localStorage.getItem(BRAIN_STORAGE);
+  return stored && isBrainId(stored) ? stored : DEFAULT_BRAIN;
 }
 
 let brain: Brain = createBrain(selectedBrainId());
@@ -284,14 +278,15 @@ const brainSelect = document.getElementById(
   "brain",
 ) as HTMLSelectElement | null;
 if (brainSelect) {
-  for (const id of BRAIN_CHOICES) {
+  for (const id of BRAIN_IDS) {
     const opt = document.createElement("option");
     opt.value = id;
-    opt.textContent = BRAIN_LABELS[id] || id;
+    opt.textContent = BRAIN_LABELS[id];
     if (id === selectedBrainId()) opt.selected = true;
     brainSelect.appendChild(opt);
   }
   brainSelect.onchange = function () {
+    if (!isBrainId(brainSelect.value)) return;
     localStorage.setItem(BRAIN_STORAGE, brainSelect.value);
     localStorage.removeItem(MATCH_STORAGE);
     location.reload();
