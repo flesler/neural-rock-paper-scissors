@@ -16,6 +16,7 @@ import {
 } from "./core";
 import {
   createArenaBrain,
+  createContestBrain,
   createGeneticBrain,
   createIocaineBrain,
 } from "./advanced";
@@ -363,7 +364,12 @@ function speciesPool(kind: SpeciesPool, opts?: BrainOpts): Brain[] {
     biasLock: 0.5,
     id: "s-iocaine",
   });
-  const core = [iocaine, createPatternsBrain(opts), createAdaptiveBrain(opts)];
+  const core = [
+    iocaine,
+    createContestBrain(opts),
+    createPatternsBrain(opts),
+    createAdaptiveBrain(opts),
+  ];
   if (kind === "core") return core;
   if (kind === "nn") return [...core, createNeuralCoverBrain(opts)];
   return [
@@ -381,6 +387,7 @@ function speciesPool(kind: SpeciesPool, opts?: BrainOpts): Brain[] {
     }),
     createPatternsBrain(opts),
     createAdaptiveBrain(opts),
+    createContestBrain(opts),
     createNeuralCoverBrain(opts),
     createRandomBrain(opts),
   ];
@@ -438,6 +445,7 @@ const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   patterns: createPatternsBrain,
   adaptive: createAdaptiveBrain,
   iocaine: (opts) => createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
+  contest: createContestBrain,
   "best-of": createSpeciesBrain,
   "best-of-nn": (opts) =>
     createSpeciesBrain({ ...opts, pool: "nn", id: "best-of-nn" }),
@@ -470,6 +478,7 @@ export const BRAIN_WARMUP: Record<string, number> = {
   "best-of-decay": 10,
   "best-of-warm": 8,
   iocaine: 10,
+  contest: 9,
   neural: 12,
   "neural-cover": 12,
   "neural-6": 12,

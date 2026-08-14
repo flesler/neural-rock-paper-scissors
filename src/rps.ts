@@ -12,12 +12,13 @@ import * as lines from "./status-lines";
 const VERSION = 2;
 const STORAGE = "brain";
 const BRAIN_STORAGE = "brainId";
-const DEFAULT_BRAIN = "best-of";
+const DEFAULT_BRAIN = "contest";
 const HUMAN = 0;
 const AI = 1;
 const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
 
 const BRAIN_CHOICES = [
+  "contest",
   "best-of",
   "iocaine",
   "neural",
@@ -28,6 +29,7 @@ const BRAIN_CHOICES = [
 ];
 
 const BRAIN_LABELS: Record<string, string> = {
+  contest: "Iocaine+",
   "best-of": "Best of",
   iocaine: "Iocaine",
   neural: "Neural",

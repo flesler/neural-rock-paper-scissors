@@ -17,6 +17,20 @@ function zeros3() {
   return [0, 0, 0];
 }
 
+/** World RPS Society throw mix: rock 35.4%, paper 29.6%, scissors 35.0%. */
+const HUMAN_PRIOR = [0.354, 0.296, 0.35];
+const HUMAN_PRIOR_N = 6;
+
+function freqPredict(humans: number[], prior = false) {
+  if (!humans.length && !prior) return null;
+  const c = zeros3();
+  if (prior) {
+    for (let i = 0; i < 3; i++) c[i] = HUMAN_PRIOR[i] * HUMAN_PRIOR_N;
+  }
+  for (const h of humans) c[h]++;
+  return argmax(c);
+}
+
 function historyNext(seq: number[], maxK = 12): number | null {
   const n = seq.length;
   if (n < 2) return null;
@@ -37,13 +51,6 @@ function historyNext(seq: number[], maxK = 12): number | null {
 }
 
 type ExpertFn = (humans: number[], ais: number[]) => number | null;
-
-function freqPredict(humans: number[]) {
-  if (!humans.length) return null;
-  const c = zeros3();
-  for (const h of humans) c[h]++;
-  return argmax(c);
-}
 
 function recencyPredict(humans: number[]) {
   if (!humans.length) return null;
@@ -183,6 +190,214 @@ export function createIocaineBrain(
       losses = winner === HUMAN ? losses + 1 : winner === AI ? 0 : losses;
       humans.push(human);
       ais.push(ai);
+      matches.push({ human, ai });
+    },
+    getMatches: () => matches,
+  };
+}
+
+function markovOrder(seq: number[], order: number): number | null {
+  const n = seq.length;
+  if (n <= order) return null;
+  const c = zeros3();
+  for (let i = 0; i + order < n; i++) {
+    let ok = true;
+    for (let j = 0; j < order; j++) {
+      if (seq[i + j] !== seq[n - order + j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) c[seq[i + order]]++;
+  }
+  const tot = c[0] + c[1] + c[2];
+  const min = order >= 3 ? 2 : 1;
+  return tot >= min ? argmax(c) : null;
+}
+
+function freqWindow(seq: number[], window: number): number | null {
+  if (!seq.length) return null;
+  const start = Math.max(0, seq.length - window);
+  const c = zeros3();
+  for (let i = start; i < seq.length; i++) c[seq[i]]++;
+  return argmax(c);
+}
+
+function antiRotate(seq: number[]): number | null {
+  if (seq.length < 2) return null;
+  const n = seq.length;
+  const rot = (seq[n - 1] - seq[n - 2] + 3) % 3;
+  if (seq.length >= 3) {
+    const prev = (seq[n - 2] - seq[n - 3] + 3) % 3;
+    if (prev !== rot) return (seq[n - 1] + rot) % 3;
+  }
+  return (seq[n - 1] + rot) % 3;
+}
+
+function outcomePredict(humans: number[], winners: number[]): number | null {
+  if (humans.length < 2) return null;
+  const lastH = humans[humans.length - 1];
+  const lastW = winners[winners.length - 1];
+  const c = zeros3();
+  for (let i = 0; i < humans.length - 1; i++) {
+    if (humans[i] === lastH && winners[i] === lastW) c[humans[i + 1]]++;
+  }
+  return c[0] + c[1] + c[2] ? argmax(c) : null;
+}
+
+type ContestExpert = {
+  name: string;
+  kind: "opp" | "self";
+  predict: () => number | null;
+};
+
+/**
+ * Contest ensemble: Iocaine-style 6-way meta-rotation over a richer
+ * predictor pool (multi-order Markov, rfind, outcome-conditioned,
+ * Greenberg windowed freq) with decayed scoring and a random floor.
+ * Opening paper beats the mild human rock bias; antiStreak is scored, not
+ * hardcoded — rfind already covers later anti-repeat.
+ */
+export function createContestBrain(
+  opts?: BrainOpts & { decay?: number; epsilon?: number; id?: string },
+): Brain {
+  const rng = rngFrom(opts);
+  const matches: Match[] = [];
+  const humans: number[] = [];
+  const ais: number[] = [];
+  const winners: number[] = [];
+  const decay = opts?.decay ?? 0.88;
+  const epsilon = opts?.epsilon ?? 0;
+
+  const experts: ContestExpert[] = [
+    { name: "histH", kind: "opp", predict: () => historyNext(humans) },
+    { name: "histA", kind: "self", predict: () => historyNext(ais) },
+    {
+      name: "histPair",
+      kind: "opp",
+      predict: () => {
+        if (humans.length < 3) return null;
+        const seq = humans.map((h, i) => h + 3 * ais[i]);
+        const next = historyNext(seq, 10);
+        return next == null ? null : next % 3;
+      },
+    },
+    { name: "freq", kind: "opp", predict: () => freqPredict(humans, true) },
+    { name: "freq8", kind: "opp", predict: () => freqWindow(humans, 8) },
+    { name: "freq16", kind: "opp", predict: () => freqWindow(humans, 16) },
+    { name: "boltz", kind: "opp", predict: () => recencyPredict(humans) },
+    { name: "m1", kind: "opp", predict: () => markovOrder(humans, 1) },
+    { name: "m2", kind: "opp", predict: () => markovOrder(humans, 2) },
+    { name: "m3", kind: "opp", predict: () => markovOrder(humans, 3) },
+    { name: "m4", kind: "opp", predict: () => markovOrder(humans, 4) },
+    { name: "m5", kind: "opp", predict: () => markovOrder(humans, 5) },
+    {
+      name: "repeat",
+      kind: "opp",
+      predict: () => (humans.length ? humans[humans.length - 1] : null),
+    },
+    {
+      name: "rotate",
+      kind: "opp",
+      predict: () => (humans.length ? option(humans[humans.length - 1]) : null),
+    },
+    { name: "antiRot", kind: "opp", predict: () => antiRotate(humans) },
+    {
+      name: "antiStreak",
+      kind: "opp",
+      predict: () => {
+        const n = humans.length;
+        if (n < 2 || humans[n - 1] !== humans[n - 2]) return null;
+        return option(humans[n - 1]);
+      },
+    },
+    {
+      name: "copyAi",
+      kind: "opp",
+      predict: () => (ais.length ? ais[ais.length - 1] : null),
+    },
+    {
+      name: "beatAi",
+      kind: "opp",
+      predict: () => (ais.length ? option(ais[ais.length - 1]) : null),
+    },
+    {
+      name: "outcome",
+      kind: "opp",
+      predict: () => outcomePredict(humans, winners),
+    },
+    {
+      name: "wsls",
+      kind: "opp",
+      predict: () => {
+        if (!humans.length) return null;
+        const w = winners[winners.length - 1];
+        if (w === HUMAN) return humans[humans.length - 1];
+        if (w === AI) return option(ais[ais.length - 1]);
+        return option(humans[humans.length - 1]);
+      },
+    },
+    {
+      name: "lsws",
+      kind: "opp",
+      predict: () => {
+        if (!humans.length) return null;
+        const w = winners[winners.length - 1];
+        if (w === AI) return humans[humans.length - 1];
+        if (w === HUMAN) return option(ais[ais.length - 1]);
+        return humans[humans.length - 1];
+      },
+    },
+  ];
+
+  const scores = experts.map(() => [0, 0, 0]);
+
+  function metaMove(pred: number, kind: "opp" | "self", rot: number) {
+    return kind === "opp" ? option(pred, 1 - rot) : option(pred, 2 - rot);
+  }
+
+  function bestMove() {
+    if (!humans.length) return 1;
+    let best = -Infinity;
+    let move = Math.floor(rng() * OPTIONS.length);
+    for (let i = 0; i < experts.length; i++) {
+      const pred = experts[i].predict();
+      if (pred == null) continue;
+      for (let rot = 0; rot < 3; rot++) {
+        if (scores[i][rot] > best) {
+          best = scores[i][rot];
+          move = metaMove(pred, experts[i].kind, rot);
+        }
+      }
+    }
+    if (!Number.isFinite(best) || best < -1.5) {
+      return Math.floor(rng() * OPTIONS.length);
+    }
+    if (humans.length >= 8 && rng() < epsilon) {
+      return Math.floor(rng() * OPTIONS.length);
+    }
+    return move;
+  }
+
+  return {
+    id: opts?.id ?? "contest",
+    decide: bestMove,
+    learn(human, ai) {
+      for (let i = 0; i < experts.length; i++) {
+        const pred = experts[i].predict();
+        for (let rot = 0; rot < 3; rot++) {
+          scores[i][rot] *= decay;
+          if (pred != null) {
+            scores[i][rot] += payoff(
+              human,
+              metaMove(pred, experts[i].kind, rot),
+            );
+          }
+        }
+      }
+      humans.push(human);
+      ais.push(ai);
+      winners.push(getWinner(human, ai));
       matches.push({ human, ai });
     },
     getMatches: () => matches,
