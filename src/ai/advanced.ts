@@ -110,7 +110,12 @@ function aiFor(pred: number, rot: number) {
 }
 
 export function createIocaineBrain(
-  opts?: BrainOpts & { decay?: number; biasLock?: number; nashMix?: number; id?: string },
+  opts?: BrainOpts & {
+    decay?: number;
+    biasLock?: number;
+    nashMix?: number;
+    id?: string;
+  },
 ): Brain {
   const rng = rngFrom(opts);
   const matches: Match[] = [];
@@ -244,7 +249,7 @@ export function createGeneticBrain(opts?: BrainOpts): Brain {
   }
 
   return {
-    id: "genetic",
+    id: "genetic-mix",
     decide() {
       if (!humans.length) return Math.floor(rng() * OPTIONS.length);
       return moveFromWeights(champ, collectPreds(humans, ais));

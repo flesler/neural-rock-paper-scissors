@@ -3,18 +3,16 @@ import { OPTIONS, createBrain, getWinner, type Brain, type Match } from "./ai";
 const VERSION = 2;
 const STORAGE = "brain";
 const BRAIN_STORAGE = "brainId";
-const DEFAULT_BRAIN = "genetic";
+const DEFAULT_BRAIN = "best-of";
 const MAX_DATAPOINTS = 15;
 const HUMAN = 0;
 const AI = 1;
+const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
 
 const BRAIN_CHOICES = [
-  "genetic",
+  "best-of",
   "iocaine",
-  "genetic-mix",
   "neural",
-  "neural-cover",
-  "neural-6",
   "neural-window",
   "patterns",
   "adaptive",
@@ -22,7 +20,8 @@ const BRAIN_CHOICES = [
 ];
 
 function selectedBrainId() {
-  return localStorage.getItem(BRAIN_STORAGE) || DEFAULT_BRAIN;
+  const stored = localStorage.getItem(BRAIN_STORAGE) || DEFAULT_BRAIN;
+  return BRAIN_ALIASES[stored] || stored;
 }
 
 let brain: Brain = createBrain(selectedBrainId());

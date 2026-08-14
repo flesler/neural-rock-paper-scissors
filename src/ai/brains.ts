@@ -331,9 +331,19 @@ export function createAdaptiveBrain(opts?: BrainOpts): Brain {
   };
 }
 
-export function createSpeciesBrain(opts?: BrainOpts): Brain {
-  const rng = rngFrom(opts);
-  const pool: Brain[] = [
+type SpeciesPool = "core" | "nn" | "full";
+
+function speciesPool(kind: SpeciesPool, opts?: BrainOpts): Brain[] {
+  const iocaine = createIocaineBrain({
+    ...opts,
+    decay: 0.9,
+    biasLock: 0.5,
+    id: "s-iocaine",
+  });
+  const core = [iocaine, createPatternsBrain(opts), createAdaptiveBrain(opts)];
+  if (kind === "core") return core;
+  if (kind === "nn") return [...core, createNeuralCoverBrain(opts)];
+  return [
     createIocaineBrain({
       ...opts,
       decay: 0.86,
@@ -351,23 +361,37 @@ export function createSpeciesBrain(opts?: BrainOpts): Brain {
     createNeuralCoverBrain(opts),
     createRandomBrain(opts),
   ];
+}
+
+export function createSpeciesBrain(
+  opts?: BrainOpts & {
+    id?: string;
+    speciesDecay?: number;
+    defaultUntil?: number;
+    pool?: SpeciesPool;
+  },
+): Brain {
+  const pool = speciesPool(opts?.pool ?? "core", opts);
   const scores = pool.map(() => 0);
   const proposed = pool.map(() => 0);
   const matches: Match[] = [];
-  const decay = 0.85;
+  const decay = opts?.speciesDecay ?? 1;
+  const defaultUntil = opts?.defaultUntil ?? 0;
+
+  function champ() {
+    let best = 0;
+    for (let i = 1; i < pool.length; i++) {
+      if (scores[i] > scores[best]) best = i;
+    }
+    return best;
+  }
 
   return {
-    id: "genetic",
+    id: opts?.id ?? "best-of",
     decide() {
       for (let i = 0; i < pool.length; i++) proposed[i] = pool[i].decide();
-      if (matches.length < 2) {
-        return proposed[Math.floor(rng() * pool.length)];
-      }
-      let best = 0;
-      for (let i = 1; i < pool.length; i++) {
-        if (scores[i] > scores[best]) best = i;
-      }
-      return proposed[best];
+      if (matches.length < defaultUntil) return proposed[0];
+      return proposed[champ()];
     },
     learn(human, ai) {
       for (let i = 0; i < pool.length; i++) {
@@ -389,15 +413,29 @@ const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   patterns: createPatternsBrain,
   adaptive: createAdaptiveBrain,
   iocaine: (opts) => createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
-  genetic: createSpeciesBrain,
+  "best-of": createSpeciesBrain,
+  "best-of-nn": (opts) =>
+    createSpeciesBrain({ ...opts, pool: "nn", id: "best-of-nn" }),
+  "best-of-decay": (opts) =>
+    createSpeciesBrain({
+      ...opts,
+      pool: "full",
+      speciesDecay: 0.85,
+      id: "best-of-decay",
+    }),
+  "best-of-warm": (opts) =>
+    createSpeciesBrain({ ...opts, defaultUntil: 6, id: "best-of-warm" }),
   "genetic-mix": createGeneticBrain,
   arena: createArenaBrain,
 };
 
 export const BRAIN_IDS = Object.keys(FACTORIES);
 
+const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
+
 export function createBrain(id: string, opts?: BrainOpts): Brain {
-  const factory = FACTORIES[id];
+  const resolved = BRAIN_ALIASES[id] ?? id;
+  const factory = FACTORIES[resolved];
   if (!factory) throw new Error("unknown brain: " + id);
   return factory(opts);
 }

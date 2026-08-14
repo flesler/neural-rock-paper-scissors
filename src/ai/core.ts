@@ -82,6 +82,12 @@ export type SeriesResult = {
     aiWinRate: number;
     score: number;
   }>;
+  segments: Array<{
+    id: string;
+    rounds: number;
+    aiWinRate: number;
+    score: number;
+  }>;
   lockIn: number | null;
 };
 
@@ -128,6 +134,7 @@ export type Opponent = {
   reset?: () => void;
   decide: () => number;
   learn?: (human: number, ai: number) => void;
+  segment?: (round: number) => string;
 };
 
 export function runSeries(
@@ -157,6 +164,17 @@ export function runSeries(
       payoffByRound.slice(b.from, Math.min(b.to, payoffByRound.length)),
     ),
   }));
+  const bySegment: Record<string, number[]> = {};
+  if (opponent.segment) {
+    for (let i = 0; i < payoffByRound.length; i++) {
+      const id = opponent.segment(i);
+      (bySegment[id] ||= []).push(payoffByRound[i]);
+    }
+  }
+  const segments = Object.keys(bySegment).map((id) => ({
+    id,
+    ...summarize(bySegment[id]),
+  }));
   return {
     aiWins,
     humanWins,
@@ -167,6 +185,7 @@ export function runSeries(
     payoffByRound,
     session: summarize(payoffByRound.slice(0, SESSION_ROUNDS)),
     buckets,
+    segments,
     lockIn: lockInRound(payoffByRound),
   };
 }

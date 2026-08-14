@@ -109,7 +109,7 @@ function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
     console.log(
-      "Usage: npm run bench -- [--rounds 80] [--seed 1] [--brains iocaine,genetic] [--fixtures cycle,random]",
+      "Usage: npm run bench -- [--rounds 80] [--seed 1] [--brains iocaine,best-of] [--fixtures cycle,random]",
     );
     process.exit(0);
   }
@@ -129,7 +129,7 @@ function main() {
     for (const brainId of args.brains) {
       const rng = mulberry32(args.seed + hash(fixtureId + ":" + brainId));
       const brain = createBrain(brainId, { rng });
-      const opponent = createFixture(fixtureId, { rng });
+      const opponent = createFixture(fixtureId, { rng, rounds: args.rounds });
       const result = runSeries(brain, opponent, args.rounds);
       results[fixtureId][brainId] = result;
       totals[brainId].win += result.aiWinRate;
@@ -200,7 +200,31 @@ function main() {
       ["SCORE*", (b) => pad(pct(totals[b].score / totals[b].n), colWidth)],
     ],
   );
-  console.log("* SCORE = (wins + 0.5 * ties) / rounds");
+  console.log("* SCORE = (wins + 0.5 * ties) / rounds\n");
+
+  const segmentRows: string[] = [];
+  for (const f of args.fixtures) {
+    const any = results[f][args.brains[0]];
+    if (!any.segments.length) continue;
+    for (const seg of any.segments) {
+      segmentRows.push(`${f}/${seg.id}`);
+    }
+  }
+  if (segmentRows.length) {
+    printTable(
+      "SEGMENTS (AI win % inside each hybrid phase)\n",
+      segmentRows,
+      args.brains,
+      (row, b) => {
+        const [f, segId] = [
+          row.slice(0, row.lastIndexOf("/")),
+          row.slice(row.lastIndexOf("/") + 1),
+        ];
+        const found = results[f][b].segments.find((s) => s.id === segId);
+        return pad(found ? pct(found.aiWinRate) : "—", colWidth);
+      },
+    );
+  }
 }
 
 main();
