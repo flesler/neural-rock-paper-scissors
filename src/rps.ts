@@ -4,7 +4,6 @@ const VERSION = 2;
 const STORAGE = "brain";
 const BRAIN_STORAGE = "brainId";
 const DEFAULT_BRAIN = "best-of";
-const MAX_DATAPOINTS = 15;
 const HUMAN = 0;
 const AI = 1;
 const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
@@ -37,6 +36,12 @@ function selectedBrainId() {
 let brain: Brain = createBrain(selectedBrainId());
 let prediction = 0;
 
+const aiScoreEl = document.getElementById("ai-score");
+const humanScoreEl = document.getElementById("human-score");
+const tieScoreEl = document.getElementById("tie-score");
+const aiRateEl = document.getElementById("ai-rate");
+const scoreHistoryEl = document.getElementById("score-history");
+
 function matches(): Match[] {
   return brain.getMatches();
 }
@@ -59,7 +64,7 @@ function startGame() {
 function endGame(human: number, ai: number) {
   setState("thinking");
   brain.learn(human, ai);
-  updateChart();
+  updateScore();
   save();
   setState("ended");
   setTimeout(startGame, 3000);
@@ -92,7 +97,9 @@ function choose(human: number) {
   endGame(human, ai);
 }
 
-const resetButton = document.getElementById("reset");
+const resetButton = document.getElementById(
+  "reset",
+) as HTMLButtonElement | null;
 if (resetButton) {
   resetButton.onclick = function () {
     localStorage.removeItem(STORAGE);
@@ -129,74 +136,52 @@ OPTIONS.forEach(function (name, choice) {
   humanChoices?.appendChild(img);
 });
 
-const blankLabels = Array.from({ length: MAX_DATAPOINTS }, () => " ");
-const blankValues = Array.from({ length: MAX_DATAPOINTS }, () => 0);
-
-function chartHeight() {
-  const choices = document.getElementById("human-choices");
-  const toolbar = document.querySelector(".ai-toolbar");
-  const chartEl = document.getElementById("chart");
-  const pickerH = choices?.getBoundingClientRect().height ?? 0;
-  const toolH = toolbar?.getBoundingClientRect().height ?? 0;
-  const panelChrome = 18;
-  const available = pickerH - toolH - panelChrome;
-  if (available >= 96) return Math.round(available);
-  const width = chartEl?.clientWidth || window.innerWidth / 2;
-  return Math.round(Math.min(Math.max(width * 0.3, 100), 180));
-}
-
-let chart: InstanceType<typeof frappe.Chart>;
-
-function boot() {
-  const chartBox = document.getElementById("chart");
-  const measuredChartHeight = chartHeight();
-  if (chartBox) chartBox.style.height = measuredChartHeight + "px";
-
-  chart = new frappe.Chart("#chart", {
-    type: "bar",
-    height: measuredChartHeight,
-    data: {
-      labels: blankLabels,
-      datasets: [
-        { name: "AI", values: blankValues.slice() },
-        { name: "Human", values: blankValues.slice() },
-        { name: "Tie", values: blankValues.slice() },
-      ],
-      yMarkers: [{ label: "", value: 1, options: { labelPos: "right" } }],
-    },
-    barOptions: {
-      spaceRatio: 0.2,
-      stacked: 1,
-    },
-    colors: ["#0F0", "#F00", "#CCC"],
-  });
-
-  setState("initializing");
-  resetHands();
-  init();
-}
-
-if (document.readyState === "complete") boot();
-else window.addEventListener("load", boot);
-
-function updateChart() {
+function scoreTotals() {
   let aiWins = 0;
   let humanWins = 0;
+  let ties = 0;
   for (const match of matches()) {
     const winner = getWinner(match.human, match.ai);
     if (winner === AI) aiWins++;
     else if (winner === HUMAN) humanWins++;
+    else ties++;
   }
-  const total = matches().length;
-  if (chart.data.labels.length >= MAX_DATAPOINTS) {
-    chart.removeDataPoint(0);
+  return { aiWins, humanWins, ties, total: matches().length };
+}
+
+function syncResetButton() {
+  if (resetButton) resetButton.disabled = matches().length === 0;
+}
+
+function updateScore() {
+  const { aiWins, humanWins, ties, total } = scoreTotals();
+  if (aiScoreEl) aiScoreEl.textContent = String(aiWins);
+  if (humanScoreEl) humanScoreEl.textContent = String(humanWins);
+  if (tieScoreEl) tieScoreEl.textContent = String(ties);
+  if (aiRateEl) {
+    if (!total) {
+      aiRateEl.textContent = "—";
+      aiRateEl.className = "rate-neutral";
+    } else {
+      const pct = Math.round((100 * aiWins) / total);
+      aiRateEl.textContent = pct + "%";
+      aiRateEl.className =
+        pct > 50 ? "rate-win" : pct < 50 ? "rate-lose" : "rate-even";
+    }
   }
-  chart.data.yMarkers[0].value = total ? humanWins : 1;
-  chart.addDataPoint(String(total), [
-    aiWins,
-    humanWins,
-    total - (aiWins + humanWins),
-  ]);
+  if (!scoreHistoryEl) return;
+  scoreHistoryEl.replaceChildren();
+  for (const match of matches()) {
+    const winner = getWinner(match.human, match.ai);
+    const dot = document.createElement("span");
+    dot.className =
+      "score-dot " +
+      (winner === AI ? "ai" : winner === HUMAN ? "human" : "tie");
+    dot.title = winner === AI ? "AI won" : winner === HUMAN ? "You won" : "Tie";
+    scoreHistoryEl.appendChild(dot);
+  }
+  scoreHistoryEl.scrollTop = scoreHistoryEl.scrollHeight;
+  syncResetButton();
 }
 
 function init() {
@@ -212,6 +197,10 @@ function init() {
       queue.push([human, ai]);
     }
   }
+  if (!queue.length) {
+    updateScore();
+    return startGame();
+  }
   step(queue);
 }
 
@@ -219,6 +208,10 @@ function step(queue: Array<[number, number]>) {
   if (!queue.length) return startGame();
   const [human, ai] = queue.shift()!;
   brain.learn(human, ai);
-  updateChart();
+  updateScore();
   setTimeout(step, 100, queue);
 }
+
+setState("initializing");
+resetHands();
+init();

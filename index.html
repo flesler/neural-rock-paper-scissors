@@ -29,23 +29,41 @@
           <span>Strategy</span>
           <select id="brain" aria-label="AI strategy"></select>
         </label>
-        <div class="ai-legend" aria-hidden="true">
-          <span class="swatch ai">AI</span>
-          <span class="swatch human">You</span>
-          <span class="swatch tie">Tie</span>
-        </div>
-        <button id="reset" type="button">Reset</button>
+        <button id="reset" type="button" class="reset-btn" title="Reset" aria-label="Reset">↻</button>
       </div>
-      <div id="chart"></div>
+      <div class="ai-scoreboard">
+        <div class="score-line">
+          <span class="score-stat">
+            <span class="score-label">AI</span>
+            <span class="score-swatch ai" aria-hidden="true"></span>
+            <strong id="ai-score">0</strong>
+          </span>
+          <span class="score-stat">
+            <span class="score-label">You</span>
+            <span class="score-swatch human" aria-hidden="true"></span>
+            <strong id="human-score">0</strong>
+          </span>
+          <span class="score-stat">
+            <span class="score-label">Ties</span>
+            <span class="score-swatch tie" aria-hidden="true"></span>
+            <strong id="tie-score">0</strong>
+          </span>
+          <span class="score-stat score-rate">
+            <span class="score-label">AI win rate</span>
+            <strong id="ai-rate" class="rate-neutral">—</strong>
+          </span>
+        </div>
+        <div id="score-history" class="score-history" aria-label="Round history"></div>
+      </div>
     </aside>
     <img id="human" class="choice" alt="">
     <img class="busy" src="img/thinking.gif" alt="">
-    <img id="ai" class="choice" alt="">
+    <div class="ai-hand-wrap">
+      <img id="ai" class="choice" alt="">
+    </div>
   </main>
 
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/neataptic@1.4.7/dist/neataptic.js"></script>
-  <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/frappe-charts/1.1.0/frappe-charts.min.iife.js"></script>
   <script type="text/javascript" src="js/rps.js"></script>
 </body>
 

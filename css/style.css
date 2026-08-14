@@ -49,18 +49,12 @@ body {
 
 h1 {
   flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
   margin: 0.8vh 4.5rem 0.6vh;
   font-size: clamp(1rem, 3.2vh, 1.85rem);
   line-height: 1.2;
   text-align: center;
-}
-
-g.chart-legend {
-  display: none;
-}
-
-g.y-markers line {
-  stroke: #777 !important;
 }
 
 main {
@@ -68,14 +62,22 @@ main {
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto minmax(72px, 40vh);
   grid-template-areas:
+    ". ."
     "choices status"
     "human ai";
+  column-gap: clamp(1rem, 3vw, 2.5rem);
   row-gap: 1.5vh;
-  align-items: stretch;
+  align-items: end;
   width: 100%;
   padding: 0 0 1.2vh;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+main > * {
+  min-height: 0;
 }
 
 #human-choices {
@@ -83,11 +85,10 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: end;
   justify-self: center;
-  width: 50vw;
+  width: 47vw;
   gap: 2vw;
-  min-height: 0;
+  margin-right: 1.5vw;
 }
 
 #human-choices img {
@@ -102,17 +103,14 @@ main {
 
 .ai-panel {
   grid-area: status;
-  align-self: end;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 0.55rem;
-  width: calc(100% - 1.6vw);
-  max-width: 46vw;
-  min-height: 0;
-  margin: 0 0.8vw 0 0;
+  width: 100%;
+  height: auto;
   padding: 0.55rem 0.65rem 0.45rem;
+  padding-right: max(0.65rem, calc(clamp(72px, 10vw, 110px) * 0.35));
   background: #fafafa;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -120,52 +118,19 @@ main {
 }
 
 .ai-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.45rem 0.65rem;
-  flex: 0 0 auto;
-}
-
-.ai-toolbar .ai-legend {
-  grid-column: 1 / -1;
-  justify-self: start;
-}
-
-.ai-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.55rem;
-  font-size: 0.75rem;
-  color: #555;
-}
-
-.ai-legend .swatch::before {
-  content: "";
-  display: inline-block;
-  width: 0.65rem;
-  height: 0.65rem;
-  margin-right: 0.28rem;
-  border-radius: 2px;
-  vertical-align: -0.05rem;
-}
-
-.ai-legend .ai::before {
-  background: #0c0;
-}
-
-.ai-legend .human::before {
-  background: #e00;
-}
-
-.ai-legend .tie::before {
-  background: #ccc;
+  justify-content: space-between;
+  gap: 0.45rem 0.5rem;
+  flex: 0 0 auto;
 }
 
 .ai-strategy {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  flex: 1 1 8rem;
   min-width: 0;
   font-size: 0.85rem;
   color: #444;
@@ -185,21 +150,33 @@ main {
   border-radius: 6px;
   padding: 0.28rem 0.6rem;
   line-height: 1.2;
+  cursor: pointer;
 }
 
 .ai-toolbar select {
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: 11rem;
+  max-width: 100%;
 }
 
-.ai-toolbar button {
-  cursor: pointer;
+.reset-btn {
   flex: 0 0 auto;
-  grid-column: 2;
-  grid-row: 1;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
-.ai-toolbar button:hover,
+.reset-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ai-toolbar button:hover:not(:disabled),
 .ai-toolbar select:hover {
   border-color: #888;
   background: #f7f7f7;
@@ -211,10 +188,100 @@ main {
   outline-offset: 2px;
 }
 
-#chart {
-  width: 100%;
-  min-height: 0;
-  overflow: hidden;
+.ai-scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.score-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.score-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.score-label {
+  flex: 0 0 auto;
+}
+
+.score-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.score-swatch.ai {
+  background: #0c0;
+}
+
+.score-swatch.human {
+  background: #e00;
+}
+
+.score-swatch.tie {
+  background: #ccc;
+}
+
+.score-line strong {
+  font-weight: 600;
+  min-width: 1ch;
+}
+
+#ai-rate.rate-win {
+  color: #0a0;
+}
+
+#ai-rate.rate-lose {
+  color: #c00;
+}
+
+#ai-rate.rate-even,
+#ai-rate.rate-neutral {
+  color: #777;
+}
+
+.score-history {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 4px;
+  background: #eee;
+  overflow-y: auto;
+  max-height: min(7rem, 28vh);
+}
+
+.score-history:empty {
+  display: none;
+}
+
+.score-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.score-dot.ai {
+  background: #0c0;
+}
+
+.score-dot.human {
+  background: #e00;
+}
+
+.score-dot.tie {
+  background: #ccc;
 }
 
 .busy {
@@ -234,16 +301,32 @@ main {
   height: 100%;
   min-height: 72px;
   object-fit: contain;
-  object-position: left top;
+  object-position: left bottom;
 }
 
 #human {
   grid-area: human;
+  justify-self: start;
+}
+
+.ai-hand-wrap {
+  grid-area: ai;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 72px;
+  overflow: visible;
 }
 
 #ai {
-  grid-area: ai;
-  transform-origin: center center;
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: right bottom;
   transform: scaleX(-1);
 }
 
@@ -264,9 +347,13 @@ main {
   animation-timing-function: ease-in-out;
 }
 
-@media (max-height: 520px) {
+@media (orientation: landscape) and (max-height: 720px) {
   h1 {
-    font-size: 1rem;
-    margin: 0.4vh 4rem 0.3vh;
+    font-size: clamp(0.9rem, 2.8vh, 1.35rem);
+    margin: 0.5vh 4rem 0.4vh;
+  }
+
+  .ai-toolbar {
+    gap: 0.5rem;
   }
 }
