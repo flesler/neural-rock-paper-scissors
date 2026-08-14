@@ -1,6 +1,9 @@
 export const OPTIONS = ["rock", "paper", "scissors"] as const;
 export const DIRECTIONS = [-1, 0, 1] as const;
 
+/** World RPS Society mix: rock 35.4%, paper 29.6%, scissors 35.0%. */
+export const HUMAN_THROW_PRIOR = [0.354, 0.296, 0.35] as const;
+
 export const HUMAN = 0;
 export const AI = 1;
 export const TIE = 0.5;

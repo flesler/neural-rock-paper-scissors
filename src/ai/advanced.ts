@@ -1,6 +1,7 @@
 import {
   AI,
   HUMAN,
+  HUMAN_THROW_PRIOR,
   OPTIONS,
   type Brain,
   type BrainOpts,
@@ -18,17 +19,46 @@ function zeros3() {
 }
 
 /** World RPS Society throw mix: rock 35.4%, paper 29.6%, scissors 35.0%. */
-const HUMAN_PRIOR = [0.354, 0.296, 0.35];
 const HUMAN_PRIOR_N = 6;
 
 function freqPredict(humans: number[], prior = false) {
   if (!humans.length && !prior) return null;
   const c = zeros3();
   if (prior) {
-    for (let i = 0; i < 3; i++) c[i] = HUMAN_PRIOR[i] * HUMAN_PRIOR_N;
+    for (let i = 0; i < 3; i++) c[i] = HUMAN_THROW_PRIOR[i] * HUMAN_PRIOR_N;
   }
   for (const h of humans) c[h]++;
   return argmax(c);
+}
+
+function throwMix(seq: number[], window?: number, prior = false) {
+  const c = zeros3();
+  if (prior) {
+    for (let i = 0; i < 3; i++) c[i] = HUMAN_THROW_PRIOR[i] * HUMAN_PRIOR_N;
+  }
+  const start = window != null ? Math.max(0, seq.length - window) : 0;
+  for (let i = start; i < seq.length; i++) c[seq[i]]++;
+  const tot = c[0] + c[1] + c[2];
+  if (!tot) return [...HUMAN_THROW_PRIOR];
+  return [c[0] / tot, c[1] / tot, c[2] / tot];
+}
+
+function bestEvThrow(mix: number[]) {
+  let best = 0;
+  let bestEv = -Infinity;
+  for (let i = 0; i < 3; i++) {
+    const ev = mix[(i + 2) % 3] - mix[(i + 1) % 3];
+    if (ev > bestEv) {
+      bestEv = ev;
+      best = i;
+    }
+  }
+  return best;
+}
+
+function evHumanPred(seq: number[], window?: number, prior = false) {
+  if (!seq.length && !prior) return null;
+  return option(bestEvThrow(throwMix(seq, window, prior)), -1);
 }
 
 function historyNext(seq: number[], maxK = 12): number | null {
@@ -255,8 +285,7 @@ type ContestExpert = {
  * Contest ensemble: Iocaine-style 6-way meta-rotation over a richer
  * predictor pool (multi-order Markov, rfind, outcome-conditioned,
  * Greenberg windowed freq) with decayed scoring and a random floor.
- * Opening paper beats the mild human rock bias; antiStreak is scored, not
- * hardcoded — rfind already covers later anti-repeat.
+ * Opening is best EV vs the population mix (rock), not mode-counter.
  */
 export function createContestBrain(
   opts?: BrainOpts & { decay?: number; epsilon?: number; id?: string },
@@ -285,6 +314,21 @@ export function createContestBrain(
     { name: "freq", kind: "opp", predict: () => freqPredict(humans, true) },
     { name: "freq8", kind: "opp", predict: () => freqWindow(humans, 8) },
     { name: "freq16", kind: "opp", predict: () => freqWindow(humans, 16) },
+    {
+      name: "ev",
+      kind: "opp",
+      predict: () => evHumanPred(humans, undefined, true),
+    },
+    {
+      name: "ev8",
+      kind: "opp",
+      predict: () => (humans.length ? evHumanPred(humans, 8) : null),
+    },
+    {
+      name: "ev16",
+      kind: "opp",
+      predict: () => (humans.length ? evHumanPred(humans, 16) : null),
+    },
     { name: "boltz", kind: "opp", predict: () => recencyPredict(humans) },
     { name: "m1", kind: "opp", predict: () => markovOrder(humans, 1) },
     { name: "m2", kind: "opp", predict: () => markovOrder(humans, 2) },
@@ -357,7 +401,7 @@ export function createContestBrain(
   }
 
   function bestMove() {
-    if (!humans.length) return Math.floor(rng() * OPTIONS.length);
+    if (!humans.length) return bestEvThrow([...HUMAN_THROW_PRIOR]);
     let best = -Infinity;
     let move = Math.floor(rng() * OPTIONS.length);
     for (let i = 0; i < experts.length; i++) {

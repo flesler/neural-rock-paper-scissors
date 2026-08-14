@@ -2,6 +2,7 @@ export {
   AI,
   DIRECTIONS,
   HUMAN,
+  HUMAN_THROW_PRIOR,
   OPTIONS,
   TIE,
   type Brain,

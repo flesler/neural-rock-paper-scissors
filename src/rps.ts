@@ -10,7 +10,7 @@ import {
 import * as lines from "./status-lines";
 
 const VERSION = 2;
-const STORAGE = "brain";
+const MATCH_STORAGE = "match";
 const BRAIN_STORAGE = "brainId";
 const OPEN_STORAGE = "openThrow";
 const DEFAULT_BRAIN = "contest";
@@ -248,7 +248,7 @@ function save() {
   for (const match of matches()) {
     nums.push(match.human + match.ai * OPTIONS.length);
   }
-  localStorage.setItem(STORAGE, nums.join(""));
+  localStorage.setItem(MATCH_STORAGE, nums.join(""));
 }
 
 function showChoice(id: string, choice: number, lost: boolean) {
@@ -275,7 +275,7 @@ const resetButton = document.getElementById(
 ) as HTMLButtonElement | null;
 if (resetButton) {
   resetButton.onclick = function () {
-    localStorage.removeItem(STORAGE);
+    localStorage.removeItem(MATCH_STORAGE);
     location.reload();
   };
 }
@@ -293,7 +293,7 @@ if (brainSelect) {
   }
   brainSelect.onchange = function () {
     localStorage.setItem(BRAIN_STORAGE, brainSelect.value);
-    localStorage.removeItem(STORAGE);
+    localStorage.removeItem(MATCH_STORAGE);
     location.reload();
   };
 }
@@ -364,7 +364,7 @@ function updateScore() {
 
 function init() {
   const queue: Array<[number, number]> = [];
-  const raw = localStorage.getItem(STORAGE);
+  const raw = localStorage.getItem(MATCH_STORAGE);
   if (raw) {
     const nums = raw.split("").map((n) => parseInt(n, 10));
     if (nums.shift() !== VERSION) nums.length = 0;

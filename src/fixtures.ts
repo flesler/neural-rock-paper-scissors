@@ -1,4 +1,4 @@
-import { type Opponent, getWinner, option } from "./ai/core";
+import { type Opponent, getWinner, option, HUMAN_THROW_PRIOR } from "./ai/core";
 
 type History = Array<{ human: number; ai: number; winner: number }>;
 type FixtureOpts = { rng?: () => number; rounds?: number };
@@ -46,6 +46,15 @@ const BASE: Record<string, Play> = {
   "beat-ai": (h) => (h.length ? option(last(h).ai) : 0),
   oscillate: (h) => h.length % 2,
   random: (_h, rng) => Math.floor(rng() * 3),
+  population: (_h, rng) => {
+    const r = rng();
+    let acc = 0;
+    for (let i = 0; i < HUMAN_THROW_PRIOR.length; i++) {
+      acc += HUMAN_THROW_PRIOR[i];
+      if (r < acc) return i;
+    }
+    return 2;
+  },
   humanish: (h, rng) => {
     if (!h.length) return Math.floor(rng() * 3);
     const r = rng();
@@ -155,6 +164,10 @@ const FACTORIES: Record<string, FixtureFactory> = {
   random: (opts) => {
     const rng = opts?.rng ?? Math.random;
     return createOpponent(() => BASE.random([], rng));
+  },
+  population: (opts) => {
+    const rng = opts?.rng ?? Math.random;
+    return createOpponent((history) => BASE.population(history, rng));
   },
   "mix-2-cycle-beat": (opts) => {
     const rng = opts?.rng ?? Math.random;
