@@ -99,6 +99,25 @@ main > * {
   aspect-ratio: 617 / 438;
   object-fit: contain;
   object-position: center center;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+  transition:
+    filter 0.15s ease,
+    transform 0.12s ease;
+}
+
+#human-choices img:hover {
+  filter: drop-shadow(0 4px 9px rgba(0, 0, 0, 0.38));
+}
+
+#human-choices img:active {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.28));
+  transform: scale(0.97);
+}
+
+.initializing #human-choices img,
+.thinking #human-choices img,
+.ended #human-choices img {
+  cursor: default;
 }
 
 .ai-panel {
@@ -345,6 +364,22 @@ main > * {
   animation-iteration-count: 6;
   animation-direction: alternate;
   animation-timing-function: ease-in-out;
+}
+
+@media (orientation: portrait) {
+  #human-choices {
+    flex-direction: column;
+    align-items: center;
+    width: auto;
+    max-width: 46vw;
+    gap: 0.35rem;
+    margin-right: 0;
+  }
+
+  #human-choices img {
+    flex: 0 0 auto;
+    width: min(34vw, 9rem);
+  }
 }
 
 @media (orientation: landscape) and (max-height: 720px) {
