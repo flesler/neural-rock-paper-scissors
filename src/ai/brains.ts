@@ -19,7 +19,7 @@ import {
   createGeneticBrain,
   createIocaineBrain,
 } from "./advanced";
-import { getNeataptic, lstmTrainOptions } from "./neataptic";
+import { createNetwork, trainOptions } from "./brain";
 
 const DIRECTION_INPUTS = DIRECTIONS.length + OPTIONS.length + 1;
 const DIRECTION_OUTPUTS = DIRECTIONS.length;
@@ -128,14 +128,13 @@ function createNeuralBrain(
   },
 ): Brain {
   const rng = rngFrom(opts);
-  const neataptic = getNeataptic();
   const inputs = spec.combined ? COMBINED_INPUTS : DIRECTION_INPUTS;
   const outputs = spec.combined ? COMBINED_OUTPUTS : DIRECTION_OUTPUTS;
   const memory =
     spec.memory ?? (spec.combined ? OPTIONS.length : DIRECTION_OUTPUTS);
-  const nn = new neataptic.architect.LSTM(inputs, memory, outputs);
-  const trainOpts = lstmTrainOptions(
-    spec.rate != null ? { rate: spec.rate } : {},
+  const nn = createNetwork(inputs, memory, outputs);
+  const trainOpts = trainOptions(
+    spec.rate != null ? { learningRate: spec.rate } : {},
   );
   const matches: Match[] = [];
   const sample = spec.combined ? combinedSample : directionSample;

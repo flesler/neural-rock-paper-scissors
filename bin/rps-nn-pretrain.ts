@@ -19,7 +19,12 @@ import {
   type BrainOpts,
   type Match,
 } from "../src/ai";
-import { getNeataptic, lstmTrainOptions } from "../src/ai/neataptic";
+import {
+  cloneNetwork,
+  createNetwork,
+  trainOptions,
+  type RpsNet,
+} from "../src/ai/brain";
 import { createFixture } from "../src/fixtures";
 
 const PRETRAIN = [
@@ -63,14 +68,7 @@ const SEED = 1;
 const WINDOW = 8;
 const MEMORY = 3;
 
-type Net = {
-  activate: (input: number[]) => number[];
-  train: (
-    data: Array<{ input: number[]; output: number[] }>,
-    opts: object,
-  ) => unknown;
-  toJSON: () => unknown;
-};
+type Net = RpsNet;
 
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -115,19 +113,15 @@ function chancesFromDirections(output: number[], prevHuman: number) {
 }
 
 function cloneNet(nn: Net): Net {
-  const neataptic = getNeataptic() as unknown as {
-    Network: { fromJSON: (json: unknown) => Net };
-  };
-  return neataptic.Network.fromJSON(nn.toJSON());
+  return cloneNetwork(nn);
 }
 
 function newLstm(): Net {
-  const neataptic = getNeataptic();
-  return new neataptic.architect.LSTM(
+  return createNetwork(
     DIRECTIONS.length + OPTIONS.length + 1,
     MEMORY,
     DIRECTIONS.length,
-  ) as unknown as Net;
+  );
 }
 
 function createWindowBrain(
@@ -137,7 +131,7 @@ function createWindowBrain(
 ): Brain {
   const rng = opts?.rng ?? Math.random;
   const freeze = !!opts?.freeze;
-  const trainOpts = lstmTrainOptions({ rate: 0.25 });
+  const trainOpts = trainOptions({ learningRate: 0.25 });
   const matches: Match[] = [];
 
   return {

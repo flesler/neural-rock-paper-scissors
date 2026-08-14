@@ -12,5 +12,5 @@ export default defineConfig({
   target: "es2018",
   splitting: false,
   treeshake: true,
-  external: ["neataptic"],
+  external: ["brain.js"],
 });

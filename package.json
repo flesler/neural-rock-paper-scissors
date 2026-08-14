@@ -14,7 +14,7 @@
     "list": "tsx bin/rps-list.ts"
   },
   "dependencies": {
-    "neataptic": "^1.4.7"
+    "brain.js": "^2.0.0-beta.24"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

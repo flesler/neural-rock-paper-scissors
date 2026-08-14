@@ -14,7 +14,7 @@ import {
   type BrainOpts,
   type Match,
 } from "../src/ai";
-import { getNeataptic, lstmTrainOptions } from "../src/ai/neataptic";
+import { cloneNetwork, createNetwork, trainOptions } from "../src/ai/brain";
 import { FIXTURE_IDS, createFixture } from "../src/fixtures";
 
 const TRAIN = [
@@ -95,13 +95,12 @@ function trainLast(
 
 function createLstmBrain(spec: Spec, opts?: BrainOpts): Brain {
   const rng = opts?.rng ?? Math.random;
-  const neataptic = getNeataptic();
   const combined = !!spec.combined;
   const inputs = combined ? 7 : 7;
   const outputs = combined ? 6 : 3;
-  const nn = new neataptic.architect.LSTM(inputs, spec.hidden, outputs);
-  const trainOpts = lstmTrainOptions({
-    rate: spec.rate,
+  const nn = createNetwork(inputs, spec.hidden, outputs);
+  const trainOpts = trainOptions({
+    learningRate: spec.rate,
     iterations: spec.iterations,
   });
   const matches: Match[] = [];
@@ -163,13 +162,11 @@ function createLstmBrain(spec: Spec, opts?: BrainOpts): Brain {
 
 function createMlpBrain(spec: Spec, opts?: BrainOpts): Brain {
   const rng = opts?.rng ?? Math.random;
-  const neataptic = getNeataptic();
   const inputs = 7;
-  const nn = neataptic.architect.Perceptron(inputs, spec.hidden, 3);
-  const trainOpts = lstmTrainOptions({
-    rate: spec.rate,
+  const nn = createNetwork(inputs, spec.hidden, 3);
+  const trainOpts = trainOptions({
+    learningRate: spec.rate,
     iterations: spec.iterations,
-    clear: true,
   });
   const matches: Match[] = [];
   const pairs: Array<{ input: number[]; output: number[] }> = [];
@@ -218,13 +215,11 @@ function createMlpBrain(spec: Spec, opts?: BrainOpts): Brain {
 function createHistBrain(spec: Spec, opts?: BrainOpts): Brain {
   const rng = opts?.rng ?? Math.random;
   const k = spec.hist ?? 4;
-  const neataptic = getNeataptic();
   const inputs = k * 6;
-  const nn = neataptic.architect.Perceptron(inputs, spec.hidden, 3);
-  const trainOpts = lstmTrainOptions({
-    rate: spec.rate,
+  const nn = createNetwork(inputs, spec.hidden, 3);
+  const trainOpts = trainOptions({
+    learningRate: spec.rate,
     iterations: spec.iterations,
-    clear: true,
   });
   const matches: Match[] = [];
   const pairs: Array<{ input: number[]; output: number[] }> = [];

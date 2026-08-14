@@ -1,3 +1,4 @@
-import neataptic from "neataptic";
+import * as brain from "brain.js";
+import type { BrainLib } from "./brain";
 
-(globalThis as { neataptic?: unknown }).neataptic = neataptic;
+(globalThis as { brain?: BrainLib }).brain = brain as unknown as BrainLib;
