@@ -124,6 +124,7 @@ function createNeuralBrain(
     combined: boolean;
     memory?: number;
     rate?: number;
+    open?: "random" | "beat-last";
   },
 ): Brain {
   const rng = rngFrom(opts);
@@ -138,11 +139,15 @@ function createNeuralBrain(
   );
   const matches: Match[] = [];
   const sample = spec.combined ? combinedSample : directionSample;
+  const open = spec.open ?? "random";
 
   return {
     id,
     decide() {
       if (matches.length - 1 < memory) {
+        if (open === "beat-last" && matches.length) {
+          return option(matches[matches.length - 1].human);
+        }
         return Math.floor(rng() * OPTIONS.length);
       }
       const prev = matches[matches.length - 1];
@@ -205,6 +210,25 @@ export function createNeuralWindowBrain(opts?: BrainOpts) {
     window: 8,
     combined: false,
     rate: 0.25,
+  });
+}
+
+export function createNeuralComboBrain(opts?: BrainOpts) {
+  return createNeuralBrain("neural-combo", opts, {
+    cover: true,
+    window: 8,
+    combined: true,
+    rate: 0.5,
+  });
+}
+
+export function createNeuralOpenBrain(opts?: BrainOpts) {
+  return createNeuralBrain("neural-open", opts, {
+    cover: true,
+    window: 8,
+    combined: false,
+    rate: 0.25,
+    open: "beat-last",
   });
 }
 
@@ -410,6 +434,8 @@ const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
   "neural-cover": createNeuralCoverBrain,
   "neural-6": createNeural6Brain,
   "neural-window": createNeuralWindowBrain,
+  "neural-combo": createNeuralComboBrain,
+  "neural-open": createNeuralOpenBrain,
   patterns: createPatternsBrain,
   adaptive: createAdaptiveBrain,
   iocaine: (opts) => createIocaineBrain({ ...opts, decay: 0.9, biasLock: 0.5 }),
@@ -449,6 +475,8 @@ export const BRAIN_WARMUP: Record<string, number> = {
   "neural-cover": 12,
   "neural-6": 12,
   "neural-window": 10,
+  "neural-combo": 10,
+  "neural-open": 8,
   patterns: 14,
   adaptive: 10,
   "genetic-mix": 10,

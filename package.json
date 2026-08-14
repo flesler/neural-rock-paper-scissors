@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit",
     "start": "npm run build && serve .",
     "bench": "tsx bin/rps-bench.ts",
+    "nn-search": "tsx bin/rps-nn-search.ts",
+    "nn-pretrain": "tsx bin/rps-nn-pretrain.ts",
     "list": "tsx bin/rps-list.ts"
   },
   "dependencies": {

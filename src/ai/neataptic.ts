@@ -13,11 +13,8 @@ export type NeatapticNet = {
 
 export type NeatapticLib = {
   architect: {
-    LSTM: new (
-      inputs: number,
-      memory: number,
-      outputs: number,
-    ) => NeatapticNet;
+    LSTM: new (inputs: number, memory: number, outputs: number) => NeatapticNet;
+    Perceptron: (...layers: number[]) => NeatapticNet;
   };
   methods: {
     rate: { FIXED: () => unknown };
