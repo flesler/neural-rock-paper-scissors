@@ -71,12 +71,51 @@ function endGame(human: number, ai: number) {
 }
 
 const GAME_STATES = ["initializing", "ready", "thinking", "ended"];
+const CAROUSEL_MS = 750;
+
+let hasPickedOnce = false;
+let carouselTimer: ReturnType<typeof setInterval> | null = null;
+let carouselIndex = 0;
+const pickerImgs: HTMLImageElement[] = [];
+
+function stopCarousel() {
+  if (carouselTimer !== null) {
+    clearInterval(carouselTimer);
+    carouselTimer = null;
+  }
+  document.body.classList.remove("carousel-pickers");
+  for (const img of pickerImgs) {
+    img.classList.remove("carousel-highlight");
+  }
+}
+
+function tickCarousel() {
+  for (const img of pickerImgs) {
+    img.classList.remove("carousel-highlight");
+  }
+  const img = pickerImgs[carouselIndex];
+  if (img) img.classList.add("carousel-highlight");
+  carouselIndex = (carouselIndex + 1) % OPTIONS.length;
+}
+
+function startCarousel() {
+  if (hasPickedOnce || carouselTimer !== null || !pickerImgs.length) return;
+  document.body.classList.add("carousel-pickers");
+  carouselIndex = 0;
+  tickCarousel();
+  carouselTimer = setInterval(tickCarousel, CAROUSEL_MS);
+}
 
 function setState(state: string) {
   for (const name of GAME_STATES) {
     document.body.classList.remove(name);
   }
   document.body.classList.add(state);
+  if (state === "ready" && !hasPickedOnce) {
+    startCarousel();
+  } else {
+    stopCarousel();
+  }
 }
 
 function save() {
@@ -95,6 +134,10 @@ function showChoice(id: string, choice: number, lost: boolean) {
 }
 
 function choose(human: number) {
+  if (!hasPickedOnce) {
+    hasPickedOnce = true;
+    stopCarousel();
+  }
   const ai = prediction;
   const winner = getWinner(human, ai);
   showChoice("human", human, winner !== HUMAN);
@@ -138,6 +181,7 @@ OPTIONS.forEach(function (name, choice) {
   img.onclick = function () {
     choose(choice);
   };
+  pickerImgs.push(img);
   humanChoices?.appendChild(img);
 });
 

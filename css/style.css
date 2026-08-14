@@ -156,11 +156,21 @@ main {
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
   transition:
     filter 0.15s ease,
-    transform 0.12s ease;
+    transform 0.12s ease,
+    opacity 0.2s ease;
 }
 
 #human-choices img:hover {
   filter: drop-shadow(0 4px 9px rgba(0, 0, 0, 0.38));
+}
+
+#human-choices img.carousel-highlight {
+  filter: drop-shadow(0 4px 9px rgba(0, 0, 0, 0.38));
+  transform: scale(1.03);
+}
+
+body.carousel-pickers #human-choices img:not(.carousel-highlight) {
+  opacity: 0.55;
 }
 
 #human-choices img:active {
@@ -172,6 +182,8 @@ main {
 .thinking #human-choices img,
 .ended #human-choices img {
   cursor: default;
+  pointer-events: none;
+  opacity: 0.45;
 }
 
 .ai-panel {
