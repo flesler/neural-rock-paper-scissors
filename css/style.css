@@ -11,6 +11,7 @@ body {
   flex-direction: column;
   height: 100dvh;
   overflow-y: auto;
+  font-family: system-ui, sans-serif;
 }
 
 .github-ribbon {
@@ -40,17 +41,10 @@ body {
   visibility: hidden;
 }
 
-#brain {
-  position: absolute;
-  left: 0.8vh;
-  top: 0.8vh;
-  z-index: 1000;
-}
-
-#reset {
-  position: absolute;
-  right: clamp(76px, 11vw, 116px);
-  top: 0.8vh;
+.initializing .ai-toolbar,
+.thinking .ai-toolbar,
+.ended .ai-toolbar {
+  pointer-events: auto;
 }
 
 h1 {
@@ -62,7 +56,7 @@ h1 {
 }
 
 g.chart-legend {
-  transform: translate(30%, 3px);
+  display: none;
 }
 
 g.y-markers line {
@@ -101,19 +95,126 @@ main {
   flex: 1 1 0;
   width: 0;
   height: auto;
+  aspect-ratio: 617 / 438;
   object-fit: contain;
   object-position: center center;
 }
 
-.ai-status {
+.ai-panel {
   grid-area: status;
-  width: 100%;
-  min-height: 0;
   align-self: end;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  width: calc(100% - 1.6vw);
+  max-width: 46vw;
+  min-height: 0;
+  margin: 0 0.8vw 0 0;
+  padding: 0.55rem 0.65rem 0.45rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ai-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  flex: 0 0 auto;
+}
+
+.ai-toolbar .ai-legend {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.ai-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.ai-legend .swatch::before {
+  content: "";
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.28rem;
+  border-radius: 2px;
+  vertical-align: -0.05rem;
+}
+
+.ai-legend .ai::before {
+  background: #0c0;
+}
+
+.ai-legend .human::before {
+  background: #e00;
+}
+
+.ai-legend .tie::before {
+  background: #ccc;
+}
+
+.ai-strategy {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.ai-strategy span {
+  flex: 0 0 auto;
+}
+
+.ai-toolbar select,
+.ai-toolbar button {
+  font: inherit;
+  font-size: 0.85rem;
+  color: #222;
+  background: #fff;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  padding: 0.28rem 0.6rem;
+  line-height: 1.2;
+}
+
+.ai-toolbar select {
+  min-width: 0;
+  max-width: 11rem;
+}
+
+.ai-toolbar button {
+  cursor: pointer;
+  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.ai-toolbar button:hover,
+.ai-toolbar select:hover {
+  border-color: #888;
+  background: #f7f7f7;
+}
+
+.ai-toolbar button:focus-visible,
+.ai-toolbar select:focus-visible {
+  outline: 2px solid #555;
+  outline-offset: 2px;
 }
 
 #chart {
   width: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .busy {

@@ -19,6 +19,16 @@ const BRAIN_CHOICES = [
   "random",
 ];
 
+const BRAIN_LABELS: Record<string, string> = {
+  "best-of": "Best of",
+  iocaine: "Iocaine",
+  neural: "Neural",
+  "neural-window": "Neural window",
+  patterns: "Patterns",
+  adaptive: "Adaptive",
+  random: "Random",
+};
+
 function selectedBrainId() {
   const stored = localStorage.getItem(BRAIN_STORAGE) || DEFAULT_BRAIN;
   return BRAIN_ALIASES[stored] || stored;
@@ -97,7 +107,7 @@ if (brainSelect) {
   for (const id of BRAIN_CHOICES) {
     const opt = document.createElement("option");
     opt.value = id;
-    opt.textContent = id;
+    opt.textContent = BRAIN_LABELS[id] || id;
     if (id === selectedBrainId()) opt.selected = true;
     brainSelect.appendChild(opt);
   }
@@ -122,32 +132,52 @@ OPTIONS.forEach(function (name, choice) {
 const blankLabels = Array.from({ length: MAX_DATAPOINTS }, () => " ");
 const blankValues = Array.from({ length: MAX_DATAPOINTS }, () => 0);
 
-const chart = new frappe.Chart("#chart", {
-  type: "bar",
-  height: (function chartHeight() {
-    const el = document.getElementById("chart");
-    const width = (el && el.clientWidth) || window.innerWidth / 2;
-    const chrome = 130;
-    const total = chrome + Math.round(width * 0.4);
-    return Math.round(
-      Math.min(Math.max(total, 200), Math.min(320, window.innerHeight * 0.36)),
-    );
-  })(),
-  data: {
-    labels: blankLabels,
-    datasets: [
-      { name: "AI", values: blankValues.slice() },
-      { name: "Human", values: blankValues.slice() },
-      { name: "Tie", values: blankValues.slice() },
-    ],
-    yMarkers: [{ label: "", value: 1, options: { labelPos: "right" } }],
-  },
-  barOptions: {
-    spaceRatio: 0.2,
-    stacked: 1,
-  },
-  colors: ["#0F0", "#F00", "#CCC"],
-});
+function chartHeight() {
+  const choices = document.getElementById("human-choices");
+  const toolbar = document.querySelector(".ai-toolbar");
+  const chartEl = document.getElementById("chart");
+  const pickerH = choices?.getBoundingClientRect().height ?? 0;
+  const toolH = toolbar?.getBoundingClientRect().height ?? 0;
+  const panelChrome = 18;
+  const available = pickerH - toolH - panelChrome;
+  if (available >= 96) return Math.round(available);
+  const width = chartEl?.clientWidth || window.innerWidth / 2;
+  return Math.round(Math.min(Math.max(width * 0.3, 100), 180));
+}
+
+let chart: InstanceType<typeof frappe.Chart>;
+
+function boot() {
+  const chartBox = document.getElementById("chart");
+  const measuredChartHeight = chartHeight();
+  if (chartBox) chartBox.style.height = measuredChartHeight + "px";
+
+  chart = new frappe.Chart("#chart", {
+    type: "bar",
+    height: measuredChartHeight,
+    data: {
+      labels: blankLabels,
+      datasets: [
+        { name: "AI", values: blankValues.slice() },
+        { name: "Human", values: blankValues.slice() },
+        { name: "Tie", values: blankValues.slice() },
+      ],
+      yMarkers: [{ label: "", value: 1, options: { labelPos: "right" } }],
+    },
+    barOptions: {
+      spaceRatio: 0.2,
+      stacked: 1,
+    },
+    colors: ["#0F0", "#F00", "#CCC"],
+  });
+
+  setState("initializing");
+  resetHands();
+  init();
+}
+
+if (document.readyState === "complete") boot();
+else window.addEventListener("load", boot);
 
 function updateChart() {
   let aiWins = 0;
@@ -192,7 +222,3 @@ function step(queue: Array<[number, number]>) {
   updateChart();
   setTimeout(step, 100, queue);
 }
-
-setState("initializing");
-resetHands();
-init();

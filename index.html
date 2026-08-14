@@ -21,13 +21,23 @@
       height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_gray_6d6d6d.png?resize=149%2C149"
       class="github-ribbon" alt="Fork me on GitHub"></a>
   <h1>Web-based Rock-Paper-Scissors vs a Neural Network</h1>
-  <select id="brain" aria-label="AI brain"></select>
-  <button id="reset">Reset</button>
   <main>
     <div id="human-choices"></div>
-    <div class="ai-status">
+    <aside class="ai-panel">
+      <div class="ai-toolbar">
+        <label class="ai-strategy">
+          <span>Strategy</span>
+          <select id="brain" aria-label="AI strategy"></select>
+        </label>
+        <div class="ai-legend" aria-hidden="true">
+          <span class="swatch ai">AI</span>
+          <span class="swatch human">You</span>
+          <span class="swatch tie">Tie</span>
+        </div>
+        <button id="reset" type="button">Reset</button>
+      </div>
       <div id="chart"></div>
-    </div>
+    </aside>
     <img id="human" class="choice" alt="">
     <img class="busy" src="img/thinking.gif" alt="">
     <img id="ai" class="choice" alt="">
