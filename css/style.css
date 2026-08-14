@@ -1,4 +1,29 @@
 
+
+html, body {
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+	overflow-x: hidden;
+	min-height: 100vh;
+}
+
+.github-ribbon {
+	position: fixed;
+	top: clamp(0px, 1vh, 5px);
+	right: clamp(0px, 1vw, 5px);
+	border: 0;
+	z-index: 1000;
+	width: clamp(90px, 15vw, 149px);
+	height: auto;
+	opacity: 0.9;
+	transition: opacity 0.2s;
+}
+
+.github-ribbon:hover {
+	opacity: 1;
+}
+
 .initializing, .thinking, .ended {
 	pointer-events: none;
 }
