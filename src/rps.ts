@@ -1,4 +1,13 @@
-import { OPTIONS, createBrain, getWinner, type Brain, type Match } from "./ai";
+import {
+  OPTIONS,
+  createBrain,
+  getWinner,
+  LEARNING_ROUNDS,
+  warmupRounds,
+  type Brain,
+  type Match,
+} from "./ai";
+import * as lines from "./status-lines";
 
 const VERSION = 2;
 const STORAGE = "brain";
@@ -41,6 +50,89 @@ const humanScoreEl = document.getElementById("human-score");
 const tieScoreEl = document.getElementById("tie-score");
 const aiRateEl = document.getElementById("ai-rate");
 const scoreHistoryEl = document.getElementById("score-history");
+const statusEl = document.getElementById("status-line");
+
+let roundFlashText: string | null = null;
+let moodText = "";
+const lineIndex: Record<string, number> = {};
+
+function pickLine(key: string, pool: string[]) {
+  const i = lineIndex[key] ?? 0;
+  lineIndex[key] = (i + 1) % pool.length;
+  return pool[i]!;
+}
+
+function stageLine(played: number, until: number, verb: string) {
+  const left = until - played;
+  return left === 1
+    ? `${verb} for 1 more turn`
+    : `${verb} for ${left} more turns`;
+}
+
+function moodLine(
+  aiWins: number,
+  humanWins: number,
+  ties: number,
+  total: number,
+) {
+  const lockIn = warmupRounds(brain.id);
+  const learnUntil = Math.min(LEARNING_ROUNDS, lockIn);
+  if (lockIn > 0 && total < learnUntil) {
+    return stageLine(total, learnUntil, "Learning");
+  }
+  if (total < lockIn) {
+    return stageLine(total, lockIn, "Perfecting");
+  }
+  if (!total) return pickLine("ready", lines.READY);
+
+  const decided = aiWins + humanWins;
+  if (!decided) return pickLine("ready", lines.READY);
+
+  if (total >= 5 && ties / total >= 0.45) {
+    return pickLine("tie-heavy", lines.TIE_HEAVY);
+  }
+
+  const aiPct = Math.round((100 * aiWins) / decided);
+  if (aiPct >= 75) return pickLine("ai-dominate", lines.AI_DOMINATE);
+  if (aiPct >= 58) return pickLine("ai-ahead", lines.AI_AHEAD);
+  if (aiPct <= 25) return pickLine("human-dominate", lines.HUMAN_DOMINATE);
+  if (aiPct <= 42) return pickLine("human-ahead", lines.HUMAN_AHEAD);
+  if (aiPct >= 45 && aiPct <= 55) return pickLine("even", lines.EVEN);
+  return pickLine("ready", lines.READY);
+}
+
+function roundLine(winner: number) {
+  if (winner === AI) return pickLine("round-ai", lines.ROUND_AI);
+  if (winner === HUMAN) return pickLine("round-human", lines.ROUND_HUMAN);
+  return pickLine("round-tie", lines.ROUND_TIE);
+}
+
+function refreshMoodText() {
+  const { aiWins, humanWins, ties, total } = scoreTotals();
+  moodText = moodLine(aiWins, humanWins, ties, total);
+}
+
+function syncStatus() {
+  if (!statusEl) return;
+  const flashing =
+    document.body.classList.contains("thinking") ||
+    document.body.classList.contains("ended");
+
+  if (flashing && roundFlashText) {
+    statusEl.textContent = roundFlashText;
+    statusEl.classList.add("blink");
+    return;
+  }
+
+  statusEl.classList.remove("blink");
+
+  if (document.body.classList.contains("initializing")) {
+    statusEl.textContent = "Warming up the AI opponent";
+    return;
+  }
+
+  statusEl.textContent = moodText;
+}
 
 function matches(): Match[] {
   return brain.getMatches();
@@ -62,6 +154,7 @@ function startGame() {
 }
 
 function endGame(human: number, ai: number) {
+  roundFlashText = roundLine(getWinner(human, ai));
   setState("thinking");
   brain.learn(human, ai);
   updateScore();
@@ -111,11 +204,18 @@ function setState(state: string) {
     document.body.classList.remove(name);
   }
   document.body.classList.add(state);
-  if (state === "ready" && !hasPickedOnce) {
-    startCarousel();
+  if (state === "ready") {
+    roundFlashText = null;
+    refreshMoodText();
+    if (!hasPickedOnce) {
+      startCarousel();
+    } else {
+      stopCarousel();
+    }
   } else {
     stopCarousel();
   }
+  syncStatus();
 }
 
 function save() {
@@ -233,6 +333,8 @@ function updateScore() {
   }
   scoreHistoryEl.scrollTop = scoreHistoryEl.scrollHeight;
   syncResetButton();
+  refreshMoodText();
+  syncStatus();
 }
 
 function init() {
@@ -264,5 +366,6 @@ function step(queue: Array<[number, number]>) {
 }
 
 setState("initializing");
+refreshMoodText();
 resetHands();
 init();

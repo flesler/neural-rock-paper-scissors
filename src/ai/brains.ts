@@ -431,6 +431,35 @@ const FACTORIES: Record<string, (opts?: BrainOpts) => Brain> = {
 
 export const BRAIN_IDS = Object.keys(FACTORIES);
 
+/** First bucket (1–5): noisy, still gathering a read. */
+export const LEARNING_ROUNDS = 5;
+
+/**
+ * Lock-in round from `npm run bench` (first 8-game window ≥60% AI wins).
+ * UI: Learning through `LEARNING_ROUNDS`, then Perfecting until this.
+ * Random never locks.
+ */
+export const BRAIN_WARMUP: Record<string, number> = {
+  "best-of": 10,
+  "best-of-nn": 10,
+  "best-of-decay": 10,
+  "best-of-warm": 8,
+  iocaine: 10,
+  neural: 12,
+  "neural-cover": 12,
+  "neural-6": 12,
+  "neural-window": 10,
+  patterns: 14,
+  adaptive: 10,
+  "genetic-mix": 10,
+  arena: 10,
+  random: 0,
+};
+
+export function warmupRounds(id: string) {
+  return BRAIN_WARMUP[id] ?? 10;
+}
+
 const BRAIN_ALIASES: Record<string, string> = { genetic: "best-of" };
 
 export function createBrain(id: string, opts?: BrainOpts): Brain {

@@ -16,4 +16,10 @@ export {
   SESSION_ROUNDS,
   WARMUP_BUCKETS,
 } from "./core";
-export { BRAIN_IDS, createBrain } from "./brains";
+export {
+  BRAIN_IDS,
+  BRAIN_WARMUP,
+  LEARNING_ROUNDS,
+  createBrain,
+  warmupRounds,
+} from "./brains";

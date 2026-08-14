@@ -1,7 +1,7 @@
 {
   "name": "neural-rock-paper-scissors",
   "version": "1.0.0",
-  "description": "Web-based Rock-Paper-Scissors vs a Neural Network",
+  "description": "Web-based Rock-Paper-Scissors vs an AI opponent",
   "private": true,
   "scripts": {
     "build": "tsup",
