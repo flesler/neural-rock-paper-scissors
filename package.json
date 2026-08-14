@@ -1,0 +1,24 @@
+{
+  "name": "neural-rock-paper-scissors",
+  "version": "1.0.0",
+  "description": "Web-based Rock-Paper-Scissors vs a Neural Network",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "keywords": [
+    "rock",
+    "paper",
+    "scissors",
+    "neural-network"
+  ],
+  "author": "Ariel Flesler",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flesler/neural-rock-paper-scissors.git"
+  }
+}
