@@ -177,6 +177,7 @@ const humanChoices = document.getElementById("human-choices");
 OPTIONS.forEach(function (name, choice) {
   const img = document.createElement("img");
   img.className = name;
+  img.draggable = false;
   img.src = "img/" + name + ".png";
   img.onclick = function () {
     choose(choice);
