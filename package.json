@@ -2,12 +2,22 @@
   "name": "neural-rock-paper-scissors",
   "version": "1.0.0",
   "description": "Web-based Rock-Paper-Scissors vs a Neural Network",
-  "main": "index.html",
+  "private": true,
   "scripts": {
-    "start": "serve ."
+    "build": "tsup",
+    "dev": "concurrently -k \"tsup --watch\" \"serve .\"",
+    "typecheck": "tsc --noEmit",
+    "start": "npm run build && serve ."
+  },
+  "dependencies": {
+    "neataptic": "^1.4.7"
   },
   "devDependencies": {
-    "serve": "^14.2.1"
+    "concurrently": "^9.2.1",
+    "serve": "^14.2.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
   },
   "keywords": [
     "rock",
