@@ -131,7 +131,9 @@ function startGame() {
 	reset()
 	setState('thinking')
 	prediction = predict()
-	setState('ready')
+  setState('ready')
+
+  document.getElementById('human').scrollIntoView({ block: 'end', inline: 'end', behavior: 'smooth' })
 }
 
 function endGame(human, ai) {

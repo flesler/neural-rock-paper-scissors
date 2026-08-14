@@ -10,8 +10,8 @@ html, body {
 
 .github-ribbon {
 	position: fixed;
-	top: clamp(0px, 1vh, 5px);
-	right: clamp(0px, 1vw, 5px);
+	top: 0;
+	right: 0;
 	border: 0;
 	z-index: 1000;
 	width: clamp(90px, 15vw, 149px);
@@ -33,13 +33,15 @@ html, body {
 
 #reset {
 	position: absolute;
-	right: 2vw;
+	right: clamp(90px, 15vw, 149px);;
 	top: 1vh;
 }
 
 h1 {
-	margin: 1vh 0vw 4vh 2vw;
-	font-size: 2.2rem;
+	margin: 1vh 0vw 4vh 0;
+	font-size: 5vh;
+	width: 100%;
+	text-align: center;
 }
 
 /* Main */
