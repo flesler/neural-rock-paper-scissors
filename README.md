@@ -1,6 +1,6 @@
 # neural-rock-paper-scissors
 
-Web-based Rock-Paper-Scissors vs a Neural Network
+Web-based Rock-Paper-Scissors vs an AI opponent
 
 ## License
 

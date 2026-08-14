@@ -357,7 +357,7 @@ export function createContestBrain(
   }
 
   function bestMove() {
-    if (!humans.length) return 1;
+    if (!humans.length) return Math.floor(rng() * OPTIONS.length);
     let best = -Infinity;
     let move = Math.floor(rng() * OPTIONS.length);
     for (let i = 0; i < experts.length; i++) {

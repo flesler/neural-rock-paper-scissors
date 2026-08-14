@@ -12,6 +12,7 @@ import * as lines from "./status-lines";
 const VERSION = 2;
 const STORAGE = "brain";
 const BRAIN_STORAGE = "brainId";
+const OPEN_STORAGE = "openThrow";
 const DEFAULT_BRAIN = "contest";
 const HUMAN = 0;
 const AI = 1;
@@ -145,10 +146,32 @@ function resetHands() {
   showChoice("ai", 0, false);
 }
 
+function uiOpeningThrow() {
+  const last = parseInt(localStorage.getItem(OPEN_STORAGE) || "", 10);
+  const weights = [0.5, 0.32, 0.18];
+  if (last >= 0 && last < 3) weights[last]! *= 0.2;
+  let sum = 0;
+  for (const w of weights) sum += w;
+  let r = Math.random() * sum;
+  let pick = 0;
+  for (let i = 0; i < 3; i++) {
+    r -= weights[i]!;
+    if (r < 0) {
+      pick = i;
+      break;
+    }
+  }
+  localStorage.setItem(OPEN_STORAGE, String(pick));
+  return pick;
+}
+
 function startGame() {
   resetHands();
   setState("thinking");
-  prediction = brain.decide();
+  prediction =
+    matches().length || brain.id === "random"
+      ? brain.decide()
+      : uiOpeningThrow();
   setState("ready");
   document
     .getElementById("human")
